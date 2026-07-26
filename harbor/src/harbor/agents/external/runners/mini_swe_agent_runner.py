@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import Any
 
 
+SWE_TOUCH_USER_MESSAGES_FIELD = "swe_touch_user_messages"
+
+
 class HarborBridgeEnvironment:
     def __init__(
         self,
@@ -26,6 +29,7 @@ class HarborBridgeEnvironment:
         self.config = {"timeout": timeout}
         self.bridge_max_retries = max(1, bridge_max_retries)
         self.bridge_retry_sleep_sec = max(0.0, bridge_retry_sleep_sec)
+        self._pending_user_messages: list[str] = []
 
     def execute(
         self,
@@ -52,6 +56,11 @@ class HarborBridgeEnvironment:
             }
         stdout = response.get("stdout") or ""
         stderr = response.get("stderr") or ""
+        user_messages = response.get(SWE_TOUCH_USER_MESSAGES_FIELD, [])
+        if isinstance(user_messages, list):
+            self._pending_user_messages.extend(
+                message for message in user_messages if isinstance(message, str)
+            )
         output = stdout if not stderr else f"{stdout}{stderr}"
         result = {
             "output": output,
@@ -60,6 +69,11 @@ class HarborBridgeEnvironment:
         }
         self._check_finished(result)
         return result
+
+    def drain_user_messages(self) -> list[str]:
+        messages = self._pending_user_messages
+        self._pending_user_messages = []
+        return messages
 
     def get_template_vars(self, **kwargs: Any) -> dict[str, Any]:
         from minisweagent.utils.serialize import recursive_merge
@@ -177,6 +191,23 @@ def _is_retryable_http_error(exc: urllib.error.HTTPError) -> bool:
     return False
 
 
+def _build_swe_touch_agent_class(base_agent_class: type) -> type:
+    class SweTouchAgent(base_agent_class):
+        def execute_actions(self, message: dict[str, Any]) -> list[dict[str, Any]]:
+            result = super().execute_actions(message)
+            user_messages = [
+                self.model.format_message(role="user", content=content)
+                for content in self.env.drain_user_messages()
+            ]
+            if user_messages:
+                result.extend(self.add_messages(*user_messages))
+            return result
+
+    SweTouchAgent.__name__ = f"SweTouch{base_agent_class.__name__}"
+    SweTouchAgent.__qualname__ = SweTouchAgent.__name__
+    return SweTouchAgent
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bridge-url", required=True)
@@ -198,7 +229,7 @@ def main() -> None:
     parser.add_argument("--bridge-retry-sleep-sec", type=float, default=5.0)
     args = parser.parse_args()
 
-    from minisweagent.agents import get_agent
+    from minisweagent.agents import get_agent_class
     from minisweagent.config import get_config_from_spec
     from minisweagent.models import get_model
     from minisweagent.utils.serialize import recursive_merge
@@ -244,7 +275,15 @@ def main() -> None:
         bridge_max_retries=args.bridge_max_retries,
         bridge_retry_sleep_sec=args.bridge_retry_sleep_sec,
     )
-    agent = get_agent(model, env, config.get("agent", {}), default_type="interactive")
+    resolved_agent_config = dict(config.get("agent", {}))
+    agent_class = get_agent_class(
+        resolved_agent_config.pop("agent_class", "interactive")
+    )
+    agent = _build_swe_touch_agent_class(agent_class)(
+        model,
+        env,
+        **resolved_agent_config,
+    )
     agent.run(Path(args.task_file).read_text())
 
 

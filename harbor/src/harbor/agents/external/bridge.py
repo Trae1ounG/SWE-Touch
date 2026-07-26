@@ -16,7 +16,8 @@ from harbor.environments.base import BaseEnvironment
 from harbor.swe_touch.runtime.remote import CounterEditController
 
 
-SWE_TOUCH_MESSAGE_INJECTION_FORMAT = "plain_user_message"
+SWE_TOUCH_MESSAGE_INJECTION_FORMAT = "user_role_message"
+SWE_TOUCH_USER_MESSAGES_FIELD = "swe_touch_user_messages"
 
 
 class EnvironmentBridgeServer:
@@ -172,7 +173,6 @@ class EnvironmentBridgeServer:
         return self._apply_swe_touch_intervention(
             payload,
             response,
-            message_field="stdout",
             command_result=dict(response),
         )
 
@@ -181,7 +181,6 @@ class EnvironmentBridgeServer:
         payload: dict[str, Any],
         response: dict[str, Any],
         *,
-        message_field: str | None,
         command_result: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         command_index = self._next_agent_command_index()
@@ -194,11 +193,8 @@ class EnvironmentBridgeServer:
             if self._swe_touch_scenario_already_recorded(intervention.scenario_id):
                 self._record_agent_event(payload, command_result or response)
                 return response
-            if intervention.message_visible and message_field:
-                response[message_field] = _append_user_message(
-                    response.get(message_field) or "",
-                    intervention.message,
-                )
+            if intervention.message_visible:
+                response[SWE_TOUCH_USER_MESSAGES_FIELD] = [intervention.message]
             self._record_swe_touch_intervention(
                 payload,
                 intervention,
@@ -372,11 +368,16 @@ class EnvironmentBridgeServer:
                 "timeout_sec": payload.get("timeout"),
             }
         )
-        return {
+        execute_response = {
             "stdout": response["stdout"],
             "stderr": response["stderr"],
             "exit_code": response["return_code"],
         }
+        if SWE_TOUCH_USER_MESSAGES_FIELD in response:
+            execute_response[SWE_TOUCH_USER_MESSAGES_FIELD] = response[
+                SWE_TOUCH_USER_MESSAGES_FIELD
+            ]
+        return execute_response
 
     def _handle_read_file(self, payload: dict[str, Any]) -> dict[str, Any]:
         if self._loop is None:
@@ -403,7 +404,6 @@ class EnvironmentBridgeServer:
                     "cwd": None,
                 },
                 response,
-                message_field="content",
                 command_result=dict(response),
             )
 
@@ -431,7 +431,6 @@ class EnvironmentBridgeServer:
                 "cwd": None,
             },
             {},
-            message_field=None,
             command_result={"write_file": path},
         )
 
@@ -470,11 +469,6 @@ def _command_to_shell(command: Any, shell: bool | None) -> str:
 
         return " ".join(shlex.quote(part) for part in command)
     raise ValueError("execute payload requires string or string-list field 'command'.")
-
-
-def _append_user_message(stdout: str, message: str) -> str:
-    separator = "" if stdout.endswith("\n") or not stdout else "\n"
-    return f"{stdout}{separator}\nUser: {message}\n"
 
 
 def _compact_event_text(text: str, *, limit: int) -> str:

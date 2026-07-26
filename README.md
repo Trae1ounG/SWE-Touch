@@ -23,6 +23,7 @@ Docker. Harbor starts the task containers; model requests are made through
 ```bash
 git clone https://github.com/Trae1ounG/SWE-Touch.git
 cd SWE-Touch
+export UV_NO_DEV=1
 uv sync --project harbor --locked
 uv run --project harbor harbor swe-touch --help
 ```
@@ -30,6 +31,7 @@ uv run --project harbor harbor swe-touch --help
 Contributors running the test suite should additionally install the development group:
 
 ```bash
+unset UV_NO_DEV
 uv sync --project harbor --group dev --locked
 ```
 
@@ -84,7 +86,7 @@ job configurations. It fails before evaluation if a task is missing or ambiguous
 Evaluation compares two runs of the same Harbor tasks:
 
 - **Vanilla** runs Mini-SWE-Agent without user intervention.
-- **Counter-Edit** keeps the task, model, tools, verifier, and step budget unchanged. It applies the released user edit when the agent reaches a task-critical region and then generates the user message from the current trajectory context.
+- **Counter-Edit** keeps the task, model, tools, verifier, and step budget unchanged. It applies the released user edit when the agent reaches a task-critical region and then generates the user message from the current trajectory context. The message enters the next model turn as a separate `role=user` message; it is never embedded in a tool call or tool output.
 
 ```bash
 export OPENAI_API_KEY=...  # Example; use the variable required by your provider.

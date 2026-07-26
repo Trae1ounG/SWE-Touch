@@ -66,7 +66,7 @@ An apply error or missing verifier result is an infrastructure error, not a fail
 
 ## Evaluation invariants
 
-Paired job generation holds the task set, model, Mini-SWE-Agent interface, step budget, verifier, retries, and concurrency configuration fixed. Counter-Edit adds only the scenario directory and current user simulator. The runtime writes every intervention and simulator output into the trial agent log directory.
+Paired job generation holds the task set, model, Mini-SWE-Agent interface, step budget, verifier, retries, and concurrency configuration fixed. Counter-Edit adds only the scenario directory and current user simulator. A simulator response is appended to the conversation as a new `role=user` message after the triggering tool observation; command stdout, file content, and other tool results remain unchanged. The runtime writes every intervention and simulator output into the trial agent log directory.
 
 Before writing either job configuration, `prepare-paired` maps every release
 `instance_id` to exactly one Harbor task directory. SWE-Bench Pro records use the

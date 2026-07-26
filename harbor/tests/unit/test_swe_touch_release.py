@@ -3,7 +3,16 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
+from harbor.agents.external.bridge import (
+    SWE_TOUCH_USER_MESSAGES_FIELD,
+    EnvironmentBridgeServer,
+)
+from harbor.agents.external.runners.mini_swe_agent_runner import (
+    HarborBridgeEnvironment,
+    _build_swe_touch_agent_class,
+)
 from harbor.models.job.config import JobConfig
 from harbor.models.task.task import Task
 from harbor.swe_touch.gate import prepare_gate
@@ -21,6 +30,76 @@ from harbor.swe_touch.runtime.user_simulator import (
 def test_user_simulator_prompt_matches_release_checksum() -> None:
     prompt = load_counter_edit_user_simulator_prompt()
     assert hashlib.sha256(prompt.encode()).hexdigest() == USER_SIMULATOR_PROMPT_SHA256
+
+
+def test_bridge_keeps_user_message_out_of_tool_output() -> None:
+    bridge = object.__new__(EnvironmentBridgeServer)
+    bridge._next_agent_command_index = lambda: 1
+    bridge._maybe_apply_swe_touch = lambda *args, **kwargs: SimpleNamespace(
+        scenario_id="scenario-1",
+        message_visible=True,
+        message="Please keep my implementation.",
+    )
+    bridge._swe_touch_scenario_already_recorded = lambda scenario_id: False
+    bridge._record_swe_touch_intervention = lambda *args, **kwargs: None
+    bridge._record_agent_event = lambda *args, **kwargs: None
+
+    response = {"stdout": "tool output\n", "stderr": "", "return_code": 0}
+    result = bridge._apply_swe_touch_intervention(
+        {"command": "sed -n '1,20p' source.py"},
+        response,
+        command_result=dict(response),
+    )
+
+    assert result["stdout"] == "tool output\n"
+    assert result[SWE_TOUCH_USER_MESSAGES_FIELD] == [
+        "Please keep my implementation."
+    ]
+
+
+def test_runner_adds_simulator_output_as_new_user_message() -> None:
+    environment = HarborBridgeEnvironment(
+        bridge_url="http://bridge.invalid",
+        bridge_token="token",
+        timeout=30,
+    )
+    environment._post = lambda path, payload: {
+        "stdout": "tool output\n",
+        "stderr": "",
+        "return_code": 0,
+        SWE_TOUCH_USER_MESSAGES_FIELD: ["Please keep my implementation."],
+    }
+    environment._check_finished = lambda result: None
+
+    class FakeModel:
+        @staticmethod
+        def format_message(*, role: str, content: str) -> dict[str, str]:
+            return {"role": role, "content": content}
+
+    class FakeAgent:
+        def __init__(self, env: HarborBridgeEnvironment) -> None:
+            self.env = env
+            self.model = FakeModel()
+            self.messages: list[dict[str, str]] = []
+
+        def add_messages(self, *messages: dict[str, str]) -> list[dict[str, str]]:
+            self.messages.extend(messages)
+            return list(messages)
+
+        def execute_actions(self, message: dict) -> list[dict[str, str]]:
+            result = self.env.execute(message["extra"]["actions"][0])
+            return self.add_messages({"role": "tool", "content": result["output"]})
+
+    agent = _build_swe_touch_agent_class(FakeAgent)(environment)
+    emitted = agent.execute_actions(
+        {"extra": {"actions": [{"command": "sed -n '1,20p' source.py"}]}}
+    )
+
+    assert emitted == [
+        {"role": "tool", "content": "tool output\n"},
+        {"role": "user", "content": "Please keep my implementation."},
+    ]
+    assert agent.messages == emitted
 
 
 def test_release_record_materializes_three_runtime_scenarios(tmp_path: Path) -> None:
