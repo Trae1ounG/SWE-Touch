@@ -8,6 +8,7 @@ from typing import Any
 from harbor.models.job.config import DatasetConfig, JobConfig, RetryConfig
 from harbor.models.trial.config import AgentConfig
 from harbor.swe_touch.records import SCHEMA_VERSION
+from harbor.swe_touch.tasks import resolve_task, task_index
 
 
 ARTIFACT_NAME = "swe_touch_candidate.json"
@@ -28,11 +29,11 @@ def prepare_synthesis(
     records = _read_region_records(regions_path)
     derived_tasks = output_dir / "tasks"
     derived_tasks.mkdir(parents=True, exist_ok=True)
-    task_index = _task_index(tasks_dir)
+    tasks = task_index(tasks_dir)
     prepared: list[str] = []
     for record in records:
         instance_id = record["instance_id"]
-        source = _find_task(task_index, instance_id)
+        source = resolve_task(tasks, instance_id)
         target = derived_tasks / instance_id
         if target.exists():
             shutil.rmtree(target)
@@ -113,7 +114,7 @@ def build_gate_requests(
     candidates_path: Path, tasks_dir: Path, output: Path
 ) -> dict[str, Any]:
     payload = json.loads(candidates_path.read_text(encoding="utf-8"))
-    task_index = _task_index(tasks_dir)
+    tasks = task_index(tasks_dir)
     rows = []
     for candidate in payload.get("candidates") or []:
         _validate_candidate(candidate)
@@ -122,7 +123,7 @@ def build_gate_requests(
             {
                 "instance_id": instance_id,
                 "candidate_id": str(candidate["candidate_id"]),
-                "task_path": str(_find_task(task_index, instance_id).resolve()),
+                "task_path": str(resolve_task(tasks, instance_id).resolve()),
                 "candidate_diff": str(candidate["diff"]),
             }
         )
@@ -180,12 +181,6 @@ def _validate_candidate(payload: dict[str, Any]) -> None:
         raise ValueError("candidate target_regions is empty")
 
 
-def _task_index(tasks_dir: Path) -> dict[str, Path]:
-    return {
-        path.name: path for path in tasks_dir.iterdir() if (path / "task.toml").exists()
-    }
-
-
 def _read_region_records(path: Path) -> list[dict[str, Any]]:
     if path.is_dir():
         files = sorted(path.glob("*.json"))
@@ -209,17 +204,6 @@ def _read_region_records(path: Path) -> list[dict[str, Any]]:
             raise ValueError("region record requires instance_id and non-empty regions")
         normalized.append({**record, "task_critical_regions": regions})
     return normalized
-
-
-def _find_task(index: dict[str, Path], instance_id: str) -> Path:
-    aliases = {instance_id, instance_id.replace("__", "_")}
-    for prefix in ("swebenchpro_", "deepswe_"):
-        if instance_id.startswith(prefix):
-            aliases.add(instance_id[len(prefix) :])
-    for name, path in index.items():
-        if name in aliases or any(alias in name or name in alias for alias in aliases):
-            return path
-    raise FileNotFoundError(f"task directory not found for {instance_id}")
 
 
 def _safe_name(value: str) -> str:

@@ -16,11 +16,21 @@ The implementation extends Harbor and preserves the Mini-SWE-Agent system prompt
 
 ## Installation
 
+Requirements: Python 3.12 or newer, [uv](https://docs.astral.sh/uv/), Git, and
+Docker. Harbor starts the task containers; model requests are made through
+[LiteLLM](https://docs.litellm.ai/docs/providers).
+
 ```bash
 git clone https://github.com/Trae1ounG/SWE-Touch.git
 cd SWE-Touch
-uv sync --project harbor --group dev
+uv sync --project harbor --locked
 uv run --project harbor harbor swe-touch --help
+```
+
+Contributors running the test suite should additionally install the development group:
+
+```bash
+uv sync --project harbor --group dev --locked
 ```
 
 ## Dataset
@@ -36,7 +46,38 @@ uv run --project harbor harbor swe-touch download \
 uv run --project harbor harbor swe-touch validate-data data/v0.1.0
 ```
 
-The source tree currently includes the versioned release bundle in `data/v0.1.0/`, so evaluation does not depend on a Hugging Face upload during development. Each JSONL row contains task-critical regions, the validated user edit, its trigger schedule, and the user-simulator prompt identifier. The exact format is documented in [`schema/`](schema/) and [`docs/data_schema.md`](docs/data_schema.md).
+The source tree also includes the versioned release bundle in `data/v0.1.0/`, so
+evaluation does not depend on Hugging Face availability. Version `v0.1.0` contains
+200 SWE-bench Verified records, 25 SWE-Bench Pro records, and 25 DeepSWE records.
+Of these, 242 contain independently validated code edits and eight contain the
+documented message-only fallback. Each JSONL row contains task-critical regions,
+the user edit or fallback, its trigger schedule, validation outcomes, and the
+user-simulator prompt identifier. The exact format is documented in
+[`schema/`](schema/) and [`docs/data_schema.md`](docs/data_schema.md).
+
+## Prepare Benchmark Tasks
+
+The JSONL release stores SWE-Touch interventions, not third-party repository images
+or tests. Obtain the corresponding Harbor tasks from their original projects:
+
+```bash
+mkdir -p tasks external
+
+# SWE-bench Verified and SWE-Bench Pro are pinned in Harbor's registry.
+uv run --project harbor harbor download swebench-verified@1.0 \
+  --output-dir tasks --export
+uv run --project harbor harbor download swebenchpro@1.0 \
+  --output-dir tasks --export
+
+# DeepSWE is already distributed in Harbor task format.
+git clone https://github.com/datacurve-ai/deep-swe.git external/deep-swe
+git -C external/deep-swe checkout e016041a6ccf8da29906afc9a3f5a8df940a1f78
+```
+
+Use `tasks/swebench-verified`, `tasks/swebenchpro`, or
+`external/deep-swe/tasks` as `--tasks`. `prepare-paired` resolves every release
+`instance_id` against that directory and writes the exact released subset into both
+job configurations. It fails before evaluation if a task is missing or ambiguous.
 
 ## Run Evaluation
 
@@ -46,8 +87,10 @@ Evaluation compares two runs of the same Harbor tasks:
 - **Counter-Edit** keeps the task, model, tools, verifier, and step budget unchanged. It applies the released user edit when the agent reaches a task-critical region and then generates the user message from the current trajectory context.
 
 ```bash
+export OPENAI_API_KEY=...  # Example; use the variable required by your provider.
+
 uv run --project harbor harbor swe-touch prepare-paired \
-  --tasks /path/to/harbor/tasks \
+  --tasks tasks/swebench-verified \
   --records data/v0.1.0/swe_bench_verified.jsonl \
   --output runs/example-model \
   --model openai/example-model \
@@ -62,6 +105,13 @@ uv run --project harbor harbor swe-touch aggregate runs/example-model/jobs \
 ```
 
 The aggregator separates unresolved tasks from infrastructure errors and records input, cached-input, and output tokens for each completed trial.
+
+Model names and credentials follow LiteLLM conventions. `openai/example-model` is
+only a placeholder; replace it with an endpoint available to you. The simulator can
+use a different provider by changing `--simulator-model` and setting that provider's
+credential variables. Reproducing the task protocol does not require private
+infrastructure, but reproducing a proprietary model's exact score requires access to
+the same model version and is subject to provider-side nondeterminism.
 
 ## Build the Dataset
 
@@ -127,3 +177,6 @@ data/v0.1.0/                  Versioned records mirrored to Hugging Face
 schema/                       Public artifact and record schemas
 docs/                         Reproduction documentation
 ```
+
+SWE-Touch source code is released under MIT (`LICENSE`). The vendored Harbor fork
+retains its Apache-2.0 license in `harbor/LICENSE`.

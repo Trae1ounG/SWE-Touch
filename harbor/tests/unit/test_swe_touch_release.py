@@ -10,6 +10,7 @@ from harbor.swe_touch.gate import prepare_gate
 from harbor.swe_touch.jobs import write_paired_job_configs
 from harbor.swe_touch.records import materialize_scenarios, read_records
 from harbor.swe_touch.synthesis import TASK_INSTRUCTION_PATH, prepare_synthesis
+from harbor.swe_touch.tasks import resolve_task_names
 from harbor.swe_touch.runtime.scenario_store import load_scenario_directory
 from harbor.swe_touch.runtime.user_simulator import (
     USER_SIMULATOR_PROMPT_SHA256,
@@ -36,11 +37,12 @@ def test_release_record_materializes_three_runtime_scenarios(tmp_path: Path) -> 
 
 def test_paired_jobs_differ_only_by_counter_edit_runtime(tmp_path: Path) -> None:
     tasks = tmp_path / "tasks"
-    tasks.mkdir()
+    _write_task(tasks / "example__task-1")
     scenarios = tmp_path / "scenarios"
     scenarios.mkdir()
     paths = write_paired_job_configs(
         tasks_dir=tasks,
+        task_names=["example__task-1"],
         scenarios_dir=scenarios,
         output_dir=tmp_path / "run",
         model="openai/example-model",
@@ -54,8 +56,45 @@ def test_paired_jobs_differ_only_by_counter_edit_runtime(tmp_path: Path) -> None
     assert vanilla.n_attempts == counter.n_attempts == 3
     assert vanilla.n_concurrent_trials == counter.n_concurrent_trials == 5
     assert vanilla.agents[0].model_name == counter.agents[0].model_name
+    assert vanilla.datasets[0].task_names == ["example__task-1"]
+    assert counter.datasets[0].task_names == ["example__task-1"]
     assert "swe_touch_scenarios_path" not in vanilla.agents[0].kwargs
     assert counter.agents[0].kwargs["swe_touch_intervention_mode"] == "patch_message"
+
+
+def test_release_instance_ids_resolve_exact_public_task_names(tmp_path: Path) -> None:
+    tasks = tmp_path / "tasks"
+    for name in (
+        "astropy__astropy-12907",
+        "instance_ansible__ansible-example",
+        "arcane-drift-detection-baselines",
+    ):
+        _write_task(tasks / name)
+
+    assert resolve_task_names(
+        tasks,
+        [
+            "astropy__astropy-12907",
+            "swebenchpro_instance_ansible__ansible-example",
+            "deepswe_arcane-drift-detection-baselines",
+        ],
+    ) == [
+        "astropy__astropy-12907",
+        "instance_ansible__ansible-example",
+        "arcane-drift-detection-baselines",
+    ]
+
+
+def test_release_instance_id_does_not_match_by_substring(tmp_path: Path) -> None:
+    tasks = tmp_path / "tasks"
+    _write_task(tasks / "prefix-example__task-1-suffix")
+
+    try:
+        resolve_task_names(tasks, ["example__task-1"])
+    except FileNotFoundError:
+        pass
+    else:
+        raise AssertionError("task matching must not use substring matches")
 
 
 def test_synthesis_and_gate_prepare_native_harbor_tasks(tmp_path: Path) -> None:

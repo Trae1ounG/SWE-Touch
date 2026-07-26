@@ -67,3 +67,16 @@ An apply error or missing verifier result is an infrastructure error, not a fail
 ## Evaluation invariants
 
 Paired job generation holds the task set, model, Mini-SWE-Agent interface, step budget, verifier, retries, and concurrency configuration fixed. Counter-Edit adds only the scenario directory and current user simulator. The runtime writes every intervention and simulator output into the trial agent log directory.
+
+Before writing either job configuration, `prepare-paired` maps every release
+`instance_id` to exactly one Harbor task directory. SWE-Bench Pro records use the
+release prefix `swebenchpro_`, and DeepSWE records use `deepswe_`; these prefixes are
+removed only for task-directory lookup. Missing or ambiguous mappings are fatal. The
+resolved directory names are stored in `DatasetConfig.task_names`, so downloading a
+larger upstream dataset does not change the evaluated cohort.
+
+The release does not redistribute third-party repository images or verifier tests.
+Those remain governed by SWE-bench Verified, SWE-Bench Pro, and DeepSWE. Docker image
+availability and model API access are therefore external prerequisites; all
+SWE-Touch-specific records, prompts, trigger logic, synthesis instructions, validation
+logic, and aggregation code are versioned in this repository.

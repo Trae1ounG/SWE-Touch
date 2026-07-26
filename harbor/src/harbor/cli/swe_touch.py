@@ -23,6 +23,7 @@ from harbor.swe_touch.synthesis import (
     collect_synthesis,
     prepare_synthesis,
 )
+from harbor.swe_touch.tasks import resolve_task_names
 from harbor.swe_touch.validation import validate_path
 
 
@@ -163,10 +164,15 @@ def prepare_paired(
     step_limit: Annotated[int, Option("--step-limit", min=1)] = 100,
     model_max_tokens: Annotated[int | None, Option("--model-max-tokens", min=1)] = None,
 ) -> None:
+    release_records = read_records(records)
     scenarios = output / "scenarios"
-    scenario_manifest = materialize_scenarios(read_records(records), scenarios)
+    scenario_manifest = materialize_scenarios(release_records, scenarios)
+    task_names = resolve_task_names(
+        tasks, (record["instance_id"] for record in release_records)
+    )
     configs = write_paired_job_configs(
         tasks_dir=tasks,
+        task_names=task_names,
         scenarios_dir=scenarios,
         output_dir=output,
         model=model,
@@ -179,6 +185,7 @@ def prepare_paired(
     _print(
         {
             "scenarios": scenario_manifest,
+            "tasks": task_names,
             "configs": {name: str(path) for name, path in configs.items()},
         }
     )

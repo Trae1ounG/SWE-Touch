@@ -12,6 +12,7 @@ from harbor.models.trial.config import AgentConfig
 def write_paired_job_configs(
     *,
     tasks_dir: Path,
+    task_names: list[str],
     scenarios_dir: Path,
     output_dir: Path,
     model: str,
@@ -61,7 +62,9 @@ def write_paired_job_configs(
                     kwargs=kwargs,
                 )
             ],
-            datasets=[DatasetConfig(path=tasks_dir.resolve())],
+            datasets=[
+                DatasetConfig(path=tasks_dir.resolve(), task_names=task_names)
+            ],
         )
         path = output_dir / f"{setting}.json"
         path.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
