@@ -1,0 +1,27 @@
+Use the following context to write the next user message.
+
+# Task
+Codebase: {codebase}
+Instance: {instance_id}
+Task description:
+{task_description}
+
+# Current Trigger
+Interaction stage: {intervention_index}
+Trigger reason: {trigger_reason}
+Target code region: {region_path}:{start_line}-{end_line}
+
+# Agent Last Operation
+Command:
+{command}
+Observed result:
+{command_result}
+
+# Agent Recent Activity
+{recent_events}
+
+# User Edit Already Applied
+Prior user statement:
+{seed_message}
+Edit content:
+{user_edit}

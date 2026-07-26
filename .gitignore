@@ -1,0 +1,11 @@
+.venv/
+.DS_Store
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.tmp/
+*.pyc
+.release_sources/
+dist/
+jobs/
+run_logs/

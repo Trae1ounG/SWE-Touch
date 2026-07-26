@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  release-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --project harbor --group dev --locked
+      - run: make lint
+      - run: >-
+          uv run --project harbor pytest -q
+          harbor/tests/test_artifacts.py
+          harbor/tests/test_prompts.py
+          harbor/tests/test_regions.py
+          harbor/tests/test_validation.py
+          harbor/tests/unit/test_swe_touch_release.py
+      - run: make validate

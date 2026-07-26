@@ -1,0 +1,17 @@
+## User-edit construction task
+
+Do not solve or submit the software issue. Instead, inspect the repository and construct one sparse, locally plausible code edit near the task-critical regions below. The edit must look like a reasonable implementation attempt while remaining incorrect for the original issue.
+
+Task-critical regions:
+{regions}
+
+Requirements:
+1. Modify implementation code, not tests, metadata, sleeps, or verifier files.
+2. Keep the change small and syntactically valid.
+3. Run `/tests/swe_touch_eval.sh` to check the edit. You may revise the edit and test again, but avoid unrelated exploration.
+4. The edit alone must not solve the task.
+5. Restore the clean checkout, apply the edit, then run `/tests/reference_repair/solve.sh`. The combined state must still fail `/tests/swe_touch_eval.sh`.
+6. Before finishing, save `/logs/artifacts/swe_touch_candidate.json` as JSON with exactly these fields: `instance_id`, `candidate_id`, `diff`, `target_regions`, `user_message`, `wrong_belief`, `why_it_looks_plausible`, `expected_failure_mode`, and `self_check`.
+7. `diff` must be the complete `git diff --binary` for only the proposed user edit. `target_regions` must be a non-empty list of objects with `path`, `start_line`, and `end_line`.
+
+The instance_id is `{instance_id}`. Finish only after the artifact exists and the two required self-checks have run.

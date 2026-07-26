@@ -1,0 +1,13 @@
+{
+  "counter_edit_synthesis": {
+    "instruction_id": "counter_edit_synthesis_instruction",
+    "task_instruction": "counter_edit_synthesis_task_instruction.txt",
+    "task_instruction_sha256_without_trailing_newline": "83492b19e369f2046fdb9d0f552e0672549e056d668b5057d5324aa16a98ca26"
+  },
+  "user_simulator": {
+    "prompt_id": "counter_edit_user_simulator",
+    "system_prompt": "counter_edit_user_simulator_system.txt",
+    "context_template": "counter_edit_user_simulator_context.txt",
+    "system_prompt_sha256_without_trailing_newline": "b6a50618262f02f2b04c4b0ce3a8f3e4b73a67d4e981d622c3e61ce350305943"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://swe-touch.github.io/schema/critical-regions-v1.schema.json",
+  "title": "SWE-Touch task-critical regions",
+  "type": "object",
+  "required": ["schema_version", "benchmark", "instance_id", "regions", "evidence"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "benchmark": {"enum": ["swe_bench_verified", "swe_bench_pro", "deepswe"]},
+    "instance_id": {"type": "string", "minLength": 1},
+    "regions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "dataset-record-v1.schema.json#/$defs/region"}
+    },
+    "evidence": {"type": "object"}
+  }
+}

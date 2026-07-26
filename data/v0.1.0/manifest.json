@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "release_version": "0.1.0",
+  "records": 250,
+  "files": {
+    "deepswe.jsonl": {
+      "records": 25,
+      "patch": 25,
+      "text_only": 0,
+      "sha256": "a652daa19ff2ace083ca1c0ad2489bb79047639dbbb34322d48dcc616bdf7b95"
+    },
+    "swe_bench_pro.jsonl": {
+      "records": 25,
+      "patch": 25,
+      "text_only": 0,
+      "sha256": "8449695b4fe0cf4216709cb2ab5a15248c3344c8db6f0dfbb57b600984fd4b79"
+    },
+    "swe_bench_verified.jsonl": {
+      "records": 200,
+      "patch": 192,
+      "text_only": 8,
+      "sha256": "0a33179fbbb72f0a462a3ab3ce73bfabc88ad0252b7a1008c0ab498910f26a0d"
+    }
+  }
+}

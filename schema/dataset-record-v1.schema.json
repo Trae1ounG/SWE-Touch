@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://swe-touch.github.io/schema/dataset-record-v1.schema.json",
+  "title": "SWE-Touch task record",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "benchmark",
+    "instance_id",
+    "task_critical_regions",
+    "counter_edit"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "benchmark": {"enum": ["swe_bench_verified", "swe_bench_pro", "deepswe"]},
+    "split": {"type": "string"},
+    "instance_id": {"type": "string", "minLength": 1},
+    "task_critical_regions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/region"}
+    },
+    "counter_edit": {
+      "type": "object",
+      "required": ["mode", "max_interventions", "interventions", "validation"],
+      "properties": {
+        "mode": {"enum": ["patch", "text_only"]},
+        "max_interventions": {"type": "integer", "minimum": 1},
+        "message_prompt_id": {"const": "counter_edit_user_simulator"},
+        "interventions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["order", "trigger", "delivery"],
+            "properties": {
+              "order": {"type": "integer", "minimum": 1},
+              "delivery": {"enum": ["patch_and_message", "patch_only", "message_only"]},
+              "trigger": {
+                "type": "object",
+                "required": ["event", "regions", "max_triggers"],
+                "properties": {
+                  "event": {"enum": ["read", "edit", "read_or_edit"]},
+                  "regions": {"type": "array", "items": {"$ref": "#/$defs/region"}},
+                  "max_triggers": {"type": "integer", "minimum": 1}
+                }
+              }
+            }
+          }
+        },
+        "validation": {"type": "object"}
+      }
+    }
+  },
+  "$defs": {
+    "region": {
+      "type": "object",
+      "required": ["path", "start_line", "end_line"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "start_line": {"type": "integer", "minimum": 1},
+        "end_line": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

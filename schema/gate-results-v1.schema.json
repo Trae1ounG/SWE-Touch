@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://swe-touch.github.io/schema/gate-results-v1.schema.json",
+  "title": "SWE-Touch user-edit validation results",
+  "type": "object",
+  "required": ["schema_version", "candidates"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "instance_id",
+          "candidate_id",
+          "reference_only",
+          "user_edit_only",
+          "user_edit_plus_reference"
+        ],
+        "properties": {
+          "instance_id": {"type": "string", "minLength": 1},
+          "candidate_id": {"type": "string", "minLength": 1},
+          "reference_only": {"$ref": "#/$defs/outcome"},
+          "user_edit_only": {"$ref": "#/$defs/outcome"},
+          "user_edit_plus_reference": {"$ref": "#/$defs/outcome"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "outcome": {
+      "type": "object",
+      "required": ["resolved"],
+      "properties": {
+        "resolved": {"type": "boolean"},
+        "exit_code": {"type": ["integer", "null"]},
+        "log_path": {"type": ["string", "null"]},
+        "error": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
