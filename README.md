@@ -14,7 +14,7 @@
 
 ---
 
-SWE-Touch evaluates coding agents when a user edits the same workspace during an ongoing software task. This repository contains the complete public implementation: task-critical region mining, Counter-Edit synthesis and validation, runtime user interventions, paired evaluation, and result aggregation.
+SWE-Touch evaluates coding agents when a user edits the same workspace during an ongoing software task. This repository contains the public reference implementation: task-critical region mining, Counter-Edit synthesis and validation, runtime user interventions, paired evaluation, and result aggregation.
 
 The implementation extends Harbor and preserves the Mini-SWE-Agent system prompt, tool interface, and interaction loop. Model calls use standard LiteLLM provider names and environment variables. The release contains no private endpoints, credentials, internal infrastructure adapters, historical experiment jobs, or paper-analysis code.
 
