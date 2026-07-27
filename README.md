@@ -10,15 +10,26 @@
 
 <p align="center">
   <a href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-blue" alt="Hugging Face Dataset"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB.svg" alt="Python 3.12+"></a>
 </p>
 
 ---
 
-SWE-Touch evaluates coding agents when a user edits the same workspace during an ongoing software task. This repository contains the public reference implementation: task-critical region mining, Counter-Edit synthesis and validation, runtime user interventions, paired evaluation, and result aggregation.
+## 👋 Overview
+
+SWE-Touch evaluates coding agents when a user edits the same workspace during an ongoing software task. It studies whether an agent can continue a repair after a user has changed the repository state.
 
 The implementation extends Harbor and preserves the Mini-SWE-Agent system prompt, tool interface, and interaction loop. Model calls use standard LiteLLM provider names and environment variables. The release contains no private endpoints, credentials, internal infrastructure adapters, historical experiment jobs, or paper-analysis code.
 
-## Installation
+### What is included
+
+- 🧭 **Task-critical region mining** from successful repair trajectories.
+- 🧩 **User-edit construction and validation** for reproducible Counter-Edit records.
+- 💬 **Live user interventions** injected as new `role=user` messages, never as tool output.
+- 📊 **Paired evaluation and aggregation** for Vanilla and Counter-Edit runs.
+
+## 🚀 Quick Start
 
 Requirements: Python 3.12 or newer, [uv](https://docs.astral.sh/uv/), Git, and
 Docker. Harbor starts the task containers; model requests are made through
@@ -39,7 +50,7 @@ unset UV_NO_DEV
 uv sync --project harbor --group dev --locked
 ```
 
-## Dataset
+## 🤗 Dataset
 
 Released records can live in a Hugging Face dataset repository and are downloaded directly by the same CLI that runs evaluation:
 
@@ -61,7 +72,7 @@ the user edit or fallback, its trigger schedule, validation outcomes, and the
 user-simulator prompt identifier. The exact format is documented in
 [`schema/`](schema/) and [`docs/data_schema.md`](docs/data_schema.md).
 
-## Prepare Benchmark Tasks
+## 🧰 Prepare Benchmark Tasks
 
 The JSONL release stores SWE-Touch interventions, not third-party repository images
 or tests. Obtain the corresponding Harbor tasks from their original projects:
@@ -85,7 +96,7 @@ Use `tasks/swebench-verified`, `tasks/swebenchpro`, or
 `instance_id` against that directory and writes the exact released subset into both
 job configurations. It fails before evaluation if a task is missing or ambiguous.
 
-## Run Evaluation
+## 🧪 Run Paired Evaluation
 
 Evaluation compares two runs of the same Harbor tasks:
 
@@ -131,7 +142,7 @@ For an OpenAI-compatible endpoint that exposes only the Responses API, set
 then uses the selected `--simulator-model` through the Responses API; otherwise it
 uses the default LiteLLM chat-completions client.
 
-## Build the Dataset
+## 🏗️ Build the Dataset
 
 The public construction pipeline has four stages:
 
@@ -184,7 +195,7 @@ uv run --project harbor harbor swe-touch validate-data dist/swe_touch.jsonl
 
 See [`docs/pipeline.md`](docs/pipeline.md) for artifact contracts and failure handling.
 
-## Repository Layout
+## 🗂️ Repository Layout
 
 ```text
 harbor/                        Pinned Harbor fork and Python environment
@@ -198,3 +209,9 @@ docs/                         Reproduction documentation
 
 SWE-Touch source code is released under MIT (`LICENSE`). The vendored Harbor fork
 retains its Apache-2.0 license in `harbor/LICENSE`.
+
+## 📚 Documentation
+
+- [`docs/pipeline.md`](docs/pipeline.md): construction artifacts, validation gates, and recovery behavior.
+- [`docs/data_schema.md`](docs/data_schema.md): released-record fields and data contracts.
+- [`schema/`](schema/): machine-readable schemas for release artifacts.
