@@ -1,6 +1,10 @@
 # SWE-Touch
 
 <p align="center">
+  <strong><em>When Users Touch the Code: Benchmarking Coding Agents under User Edits</em></strong>
+</p>
+
+<p align="center">
   <img src="assets/swe-touch-logo.png" width="800" alt="SWE-Touch logo">
 </p>
 
