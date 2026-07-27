@@ -76,6 +76,11 @@ def validate_record(row: dict[str, Any]) -> None:
         trigger = intervention.get("trigger") or {}
         if trigger.get("event") not in {"read", "edit", "read_or_edit"}:
             raise ValueError(f"{row['instance_id']}: invalid trigger event")
+        if expected_order > 1 and trigger.get("event") != "edit":
+            raise ValueError(
+                f"{row['instance_id']}: intervention {expected_order} "
+                "must wait for a code edit"
+            )
         _validate_regions(trigger.get("regions") or [], row["instance_id"])
         patch = intervention.get("patch")
         if patch:

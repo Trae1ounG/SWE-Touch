@@ -88,6 +88,12 @@ Evaluation compares two runs of the same Harbor tasks:
 - **Vanilla** runs Mini-SWE-Agent without user intervention.
 - **Counter-Edit** keeps the task, model, tools, verifier, and step budget unchanged. It applies the released user edit when the agent reaches a task-critical region and then generates the user message from the current trajectory context. The message enters the next model turn as a separate `role=user` message; it is never embedded in a tool call or tool output.
 
+The first intervention follows the release record's trigger (`read_or_edit` for
+SWE-bench Verified and `edit` for the harder-task records). Later interventions
+wait until the agent actually edits the target region. A patch-application failure
+does not consume an intervention or emit a user message; the runtime retries after
+the next matching edit.
+
 ```bash
 export OPENAI_API_KEY=...  # Example; use the variable required by your provider.
 
@@ -114,6 +120,12 @@ use a different provider by changing `--simulator-model` and setting that provid
 credential variables. Reproducing the task protocol does not require private
 infrastructure, but reproducing a proprietary model's exact score requires access to
 the same model version and is subject to provider-side nondeterminism.
+
+For an OpenAI-compatible endpoint that exposes only the Responses API, set
+`SWE_TOUCH_SIMULATOR_RESPONSES_BASE_URL` to the API root (the client appends
+`/responses`) and `SWE_TOUCH_SIMULATOR_API_KEY` to its credential. The simulator
+then uses the selected `--simulator-model` through the Responses API; otherwise it
+uses the default LiteLLM chat-completions client.
 
 ## Build the Dataset
 

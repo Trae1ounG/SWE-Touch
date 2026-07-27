@@ -33,6 +33,10 @@ The validator writes one row per candidate under `candidates`. A row contains `c
 `passes_validation`, and the three state results: `reference_only`, `user_edit_only`, and
 `user_edit_plus_reference`.
 
+`resolved` is `true` or `false` only when the verifier completed. Missing results
+and infrastructure errors are represented as `null` and must be retried before a
+candidate can pass validation.
+
 Schema: `schema/gate-results-v1.schema.json`. The assembler recomputes validation from the three
 outcomes and does not trust the producer-supplied summary flag.
 
@@ -45,6 +49,8 @@ deduplicates, and sorts these records without changing their fields.
 
 `harbor swe-touch materialize` consumes that exact record for evaluation. The resulting
 scenario directory is a temporary Harbor adapter, not a second dataset or public schema.
+The first intervention retains its recorded trigger. Every later intervention uses
+an `edit` trigger and therefore waits for the agent to modify the target region.
 
 ```bash
 uv run --project harbor harbor swe-touch assemble-record \

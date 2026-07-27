@@ -407,9 +407,8 @@ def _clean_path(raw: str) -> str | None:
 def _looks_like_repo_file(path: str) -> bool:
     if path.startswith("/"):
         return path.startswith("/testbed/")
-    if "/" not in path:
-        return False
-    return "." in path.rsplit("/", 1)[-1]
+    name = path.rsplit("/", 1)[-1]
+    return bool(name) and name not in {".", ".."} and "." in name
 
 
 def _dedupe(events: list[AgentEvent]) -> list[AgentEvent]:

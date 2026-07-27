@@ -32,7 +32,7 @@
       "type": "object",
       "required": ["resolved"],
       "properties": {
-        "resolved": {"type": "boolean"},
+        "resolved": {"type": ["boolean", "null"]},
         "exit_code": {"type": ["integer", "null"]},
         "log_path": {"type": ["string", "null"]},
         "error": {"type": ["string", "null"]}

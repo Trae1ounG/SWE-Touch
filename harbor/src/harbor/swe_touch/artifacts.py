@@ -76,7 +76,7 @@ def assemble_record_payload(
                 {
                     "order": order,
                     "trigger": {
-                        "event": trigger_event,
+                        "event": _intervention_event(trigger_event, order),
                         "regions": regions,
                         "max_triggers": 1,
                     },
@@ -105,7 +105,7 @@ def assemble_record_payload(
                 {
                     "order": order,
                     "trigger": {
-                        "event": trigger_event,
+                        "event": _intervention_event(trigger_event, order),
                         "regions": target_regions,
                         "max_triggers": 1,
                     },
@@ -268,6 +268,10 @@ def _resolved(outcome: Any) -> bool | None:
     if isinstance(reward, int | float):
         return reward >= 1
     return None
+
+
+def _intervention_event(first_event: str, order: int) -> str:
+    return first_event if order == 1 else "edit"
 
 
 def _validate_pipeline_artifacts(

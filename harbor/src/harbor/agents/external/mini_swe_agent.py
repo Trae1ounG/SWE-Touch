@@ -336,6 +336,24 @@ class MiniSweAgentExternal(BaseAgent):
             if value is not None:
                 env[key] = value
         env.update(self._extra_env)
+        # The runner talks to Harbor's per-trial bridge over loopback.  Preserve
+        # any caller proxy for model traffic, but never route the bridge through it.
+        proxy_exclusions: list[str] = []
+        for value in (
+            env.get("NO_PROXY"),
+            env.get("no_proxy"),
+            os.environ.get("NO_PROXY"),
+            os.environ.get("no_proxy"),
+        ):
+            for host in (value or "").split(","):
+                host = host.strip()
+                if host and host not in proxy_exclusions:
+                    proxy_exclusions.append(host)
+        for host in ("127.0.0.1", "localhost"):
+            if host not in proxy_exclusions:
+                proxy_exclusions.append(host)
+        env["NO_PROXY"] = ",".join(proxy_exclusions)
+        env["no_proxy"] = env["NO_PROXY"]
         return env
 
     def _swe_touch_controller(

@@ -97,6 +97,13 @@ class CounterEditHarness:
     def trigger_count(self, scenario_id: str) -> int:
         return self._trigger_counts.get(scenario_id, 0)
 
+    def release_scenario(self, scenario: CounterEditScenario) -> None:
+        count = self._trigger_counts.get(scenario.scenario_id, 0)
+        if count <= 1:
+            self._trigger_counts.pop(scenario.scenario_id, None)
+        else:
+            self._trigger_counts[scenario.scenario_id] = count - 1
+
     def reserve_scenario(self, scenario: CounterEditScenario) -> bool:
         count = self._trigger_counts.get(scenario.scenario_id, 0)
         if count >= scenario.max_triggers:

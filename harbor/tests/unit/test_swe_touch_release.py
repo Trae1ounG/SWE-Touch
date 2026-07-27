@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -13,16 +14,25 @@ from harbor.agents.external.runners.mini_swe_agent_runner import (
     HarborBridgeEnvironment,
     _build_swe_touch_agent_class,
 )
+from harbor.agents.external.mini_swe_agent import MiniSweAgentExternal
 from harbor.models.job.config import JobConfig
 from harbor.models.task.task import Task
-from harbor.swe_touch.gate import prepare_gate
+from harbor.environments.base import ExecResult
+from harbor.swe_touch.gate import collect_gate, prepare_gate
 from harbor.swe_touch.jobs import write_paired_job_configs
 from harbor.swe_touch.records import materialize_scenarios, read_records
+from harbor.swe_touch.runtime.command_events import events_from_shell_command
+from harbor.swe_touch.runtime.harness import CounterEditHarness
+from harbor.swe_touch.runtime.remote import CounterEditController
+from harbor.swe_touch.runtime.schemas import AgentEvent
 from harbor.swe_touch.synthesis import TASK_INSTRUCTION_PATH, prepare_synthesis
 from harbor.swe_touch.tasks import resolve_task_names
 from harbor.swe_touch.runtime.scenario_store import load_scenario_directory
 from harbor.swe_touch.runtime.user_simulator import (
+    OpenAIResponsesUserSimulatorClient,
     USER_SIMULATOR_PROMPT_SHA256,
+    UserSimulator,
+    UserSimulatorContext,
     load_counter_edit_user_simulator_prompt,
 )
 
@@ -102,6 +112,71 @@ def test_runner_adds_simulator_output_as_new_user_message() -> None:
     assert agent.messages == emitted
 
 
+def test_external_runner_bypasses_proxy_for_local_bridge(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("NO_PROXY", "internal.example")
+    agent = MiniSweAgentExternal(logs_dir=tmp_path, model_name="example")
+
+    env = agent._build_process_env()
+
+    assert "internal.example" in env["NO_PROXY"].split(",")
+    assert "127.0.0.1" in env["NO_PROXY"].split(",")
+    assert "localhost" in env["NO_PROXY"].split(",")
+    assert env["no_proxy"] == env["NO_PROXY"]
+
+
+def test_user_simulator_returns_llm_message_when_available() -> None:
+    class FixedClient:
+        def complete(self, messages: list[dict[str, str]]) -> str:
+            assert messages[0]["role"] == "system"
+            assert messages[1]["role"] == "user"
+            return "I checked the implementation in this file, so please keep that change."
+
+    result = UserSimulator(
+        model_name="openai/example-model",
+        client=FixedClient(),
+    ).generate(
+        UserSimulatorContext(
+            instance_id="example__task-1",
+            intervention_index=1,
+            codebase="example",
+            task_description="Fix the parser.",
+            region_path="source.py",
+            start_line=10,
+            end_line=12,
+            trigger_reason="code_region",
+            command="sed -n '10,12p' source.py",
+        )
+    )
+
+    assert result.message_source == "llm"
+    assert result.message_model == "openai/example-model"
+    assert result.fallback_reason is None
+
+
+def test_user_simulator_uses_configured_responses_client(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "SWE_TOUCH_SIMULATOR_RESPONSES_BASE_URL", "https://example.test/v1"
+    )
+    monkeypatch.setenv("SWE_TOUCH_SIMULATOR_API_KEY", "test-key")
+
+    client = UserSimulator(model_name="gpt-4o")._default_client()
+
+    assert isinstance(client, OpenAIResponsesUserSimulatorClient)
+    assert client.base_url == "https://example.test/v1"
+
+
+def test_root_level_source_file_commands_emit_region_events() -> None:
+    read_events = events_from_shell_command("rg value source.py")
+    edit_events = events_from_shell_command("sed -i 's/old/new/' source.py")
+
+    assert [(event.event_type, event.path) for event in read_events] == [
+        ("read", "source.py")
+    ]
+    assert [(event.event_type, event.path) for event in edit_events] == [
+        ("edit", "source.py")
+    ]
+
+
 def test_release_record_materializes_three_runtime_scenarios(tmp_path: Path) -> None:
     record_path = tmp_path / "records.jsonl"
     record_path.write_text(json.dumps(_record()) + "\n", encoding="utf-8")
@@ -112,6 +187,103 @@ def test_release_record_materializes_three_runtime_scenarios(tmp_path: Path) -> 
     assert manifest == {"records": 1, "scenarios": 3}
     assert [scenario.user.intervention_index for scenario in scenarios] == [1, 2, 3]
     assert all(scenario.user.role == "counter_edit_user" for scenario in scenarios)
+    assert [scenario.trigger.event for scenario in scenarios] == [
+        "read_or_edit",
+        "edit",
+        "edit",
+    ]
+
+
+def test_later_rounds_wait_for_edit_before_reapplying_patch(tmp_path: Path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    (repository / "source.py").write_text("value = 1\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+    subprocess.run(["git", "add", "source.py"], cwd=repository, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=SWE-Touch",
+            "-c",
+            "user.email=swe-touch@example.invalid",
+            "commit",
+            "-qm",
+            "initial",
+        ],
+        cwd=repository,
+        check=True,
+    )
+    record_path = tmp_path / "records.jsonl"
+    record_path.write_text(json.dumps(_record()) + "\n", encoding="utf-8")
+    scenario_dir = tmp_path / "scenarios"
+    materialize_scenarios(read_records(record_path), scenario_dir)
+    harness = CounterEditHarness(load_scenario_directory(scenario_dir))
+    read = AgentEvent(event_type="read", path="source.py")
+    edit = AgentEvent(event_type="edit", path="source.py")
+
+    first = harness.observe(
+        read,
+        repository=repository,
+        scenario_dir=scenario_dir / "example__task-1",
+    )
+    assert first is not None and first.patch_applied
+    assert harness.observe(read, repository=repository) is None
+
+    (repository / "source.py").write_text("value = 1\n", encoding="utf-8")
+    second = harness.observe(
+        edit,
+        repository=repository,
+        scenario_dir=scenario_dir / "example__task-1",
+    )
+    assert second is not None and second.patch_applied
+    assert (repository / "source.py").read_text(encoding="utf-8") == "value = 2\n"
+
+
+async def test_failed_patch_does_not_consume_runtime_scenario(tmp_path: Path) -> None:
+    record_path = tmp_path / "records.jsonl"
+    record_path.write_text(json.dumps(_record()) + "\n", encoding="utf-8")
+    scenario_dir = tmp_path / "scenarios"
+    materialize_scenarios(read_records(record_path), scenario_dir)
+    scenarios = load_scenario_directory(scenario_dir)
+    harness = CounterEditHarness(scenarios)
+    controller = CounterEditController(
+        scenario_dir=scenario_dir,
+        harness=harness,
+        current_instance_id="example__task-1",
+    )
+
+    class FailedPatchEnvironment:
+        def __init__(self) -> None:
+            self.commands: list[str] = []
+
+        async def upload_file(self, local_path: Path, remote_path: str) -> None:
+            return None
+
+        async def exec(self, *, command: str, **kwargs: object) -> ExecResult:
+            self.commands.append(command)
+            if command.startswith("mkdir -p .git/swe-touch/interventions"):
+                return ExecResult(return_code=0)
+            if command.startswith("rm -f .git/swe-touch/interventions"):
+                return ExecResult(return_code=0)
+            return ExecResult(
+                return_code=43,
+                stderr="patch application produced no repository state change",
+            )
+
+    environment = FailedPatchEnvironment()
+    intervention = await controller.maybe_intervene(
+        command="sed -n '1,1p' source.py",
+        cwd="/testbed",
+        environment=environment,  # type: ignore[arg-type]
+    )
+
+    assert intervention is None
+    assert harness.trigger_count(scenarios[0].scenario_id) == 0
+    assert any(
+        command.startswith("rm -f .git/swe-touch/interventions")
+        for command in environment.commands
+    )
 
 
 def test_paired_jobs_differ_only_by_counter_edit_runtime(tmp_path: Path) -> None:
@@ -214,6 +386,48 @@ def test_synthesis_and_gate_prepare_native_harbor_tasks(tmp_path: Path) -> None:
         assert Task.is_valid_dir(task_dir)
 
 
+def test_gate_collection_preserves_candidates_with_missing_results(
+    tmp_path: Path,
+) -> None:
+    manifest = {
+        "schema_version": "1.0.0",
+        "tasks": [
+            {
+                "task_name": f"task__{variant}",
+                "instance_id": "example__task-1",
+                "candidate_id": "candidate-1",
+                "variant": variant,
+            }
+            for variant in (
+                "reference_only",
+                "user_edit_only",
+                "user_edit_plus_reference",
+            )
+        ],
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    output = tmp_path / "gates.json"
+
+    summary = collect_gate(tmp_path / "jobs", manifest_path, output)
+    payload = json.loads(output.read_text(encoding="utf-8"))
+
+    assert summary["candidates"] == 1
+    assert summary["accepted"] == 0
+    [candidate] = payload["candidates"]
+    assert candidate["passes_validation"] is False
+    for variant in (
+        "reference_only",
+        "user_edit_only",
+        "user_edit_plus_reference",
+    ):
+        assert candidate[variant] == {
+            "resolved": None,
+            "error": "missing_result",
+            "result_path": None,
+        }
+
+
 def test_synthesis_uses_versioned_task_instruction_without_system_prompt_override() -> (
     None
 ):
@@ -232,15 +446,6 @@ def _record() -> dict:
         "target_regions": [{"path": "source.py", "start_line": 1, "end_line": 1}],
         "user_claim": "Keep this branch as written.",
     }
-    intervention = {
-        "delivery": "patch_and_message",
-        "patch": patch,
-        "trigger": {
-            "event": "read_or_edit",
-            "max_triggers": 1,
-            "regions": patch["target_regions"],
-        },
-    }
     return {
         "schema_version": "1.0.0",
         "benchmark": "swe_bench_verified",
@@ -252,7 +457,17 @@ def _record() -> dict:
             "max_interventions": 3,
             "message_prompt_id": "counter_edit_user_simulator",
             "interventions": [
-                {"order": order, **intervention} for order in range(1, 4)
+                {
+                    "order": order,
+                    "delivery": "patch_and_message",
+                    "patch": patch,
+                    "trigger": {
+                        "event": "read_or_edit" if order == 1 else "edit",
+                        "max_triggers": 1,
+                        "regions": patch["target_regions"],
+                    },
+                }
+                for order in range(1, 4)
             ],
             "validation": {"status": "validated_counter_edit"},
         },

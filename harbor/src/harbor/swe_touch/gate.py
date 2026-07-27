@@ -76,6 +76,20 @@ def collect_gate(jobs_dir: Path, manifest_path: Path, output: Path) -> dict[str,
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     task_map = {row["task_name"]: row for row in manifest["tasks"]}
     grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in manifest["tasks"]:
+        key = (row["instance_id"], row["candidate_id"])
+        candidate = grouped.setdefault(
+            key,
+            {
+                "instance_id": row["instance_id"],
+                "candidate_id": row["candidate_id"],
+            },
+        )
+        candidate[row["variant"]] = {
+            "resolved": None,
+            "error": "missing_result",
+            "result_path": None,
+        }
     for result_path in sorted(jobs_dir.rglob("result.json")):
         result = TrialResult.model_validate_json(
             result_path.read_text(encoding="utf-8")

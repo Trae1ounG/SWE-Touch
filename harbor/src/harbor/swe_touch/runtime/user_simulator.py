@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,6 +15,8 @@ USER_SIMULATOR_PROMPT_SHA256 = (
 _PROMPT_DIR = Path(__file__).parent.parent / "prompts"
 _SYSTEM_PROMPT_PATH = _PROMPT_DIR / "counter_edit_user_simulator_system.txt"
 _CONTEXT_TEMPLATE_PATH = _PROMPT_DIR / "counter_edit_user_simulator_context.txt"
+_RESPONSES_BASE_URL_ENV = "SWE_TOUCH_SIMULATOR_RESPONSES_BASE_URL"
+_RESPONSES_API_KEY_ENV = "SWE_TOUCH_SIMULATOR_API_KEY"
 
 
 @dataclass(frozen=True)
@@ -117,6 +120,46 @@ class LiteLLMUserSimulatorClient:
         return content
 
 
+class OpenAIResponsesUserSimulatorClient:
+    """Call an OpenAI-compatible Responses endpoint for simulator messages."""
+
+    def __init__(
+        self,
+        *,
+        model_name: str,
+        base_url: str,
+        api_key: str,
+        timeout_sec: int = 60,
+        max_tokens: int = 512,
+    ) -> None:
+        self.model_name = model_name
+        self.base_url = base_url
+        self.api_key = api_key
+        self.timeout_sec = timeout_sec
+        self.max_tokens = max_tokens
+
+    def complete(self, messages: list[dict[str, str]]) -> str:
+        import httpx
+        from openai import OpenAI
+
+        with httpx.Client(timeout=self.timeout_sec, trust_env=False) as http_client:
+            client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+                http_client=http_client,
+            )
+            response = client.responses.create(
+                model=self.model_name,
+                input=messages,
+                max_output_tokens=self.max_tokens,
+                temperature=0.2,
+            )
+        content = response.output_text
+        if not isinstance(content, str) or not content.strip():
+            raise RuntimeError("empty user simulator response")
+        return content
+
+
 class UserSimulator:
     def __init__(
         self,
@@ -161,12 +204,25 @@ class UserSimulator:
         )
 
     def _complete(self, messages: list[dict[str, str]]) -> str:
-        client = self._client or LiteLLMUserSimulatorClient(
+        client = self._client or self._default_client()
+        return client.complete(messages)
+
+    def _default_client(self) -> UserSimulatorClient:
+        base_url = os.environ.get(_RESPONSES_BASE_URL_ENV)
+        api_key = os.environ.get(_RESPONSES_API_KEY_ENV)
+        if base_url and api_key:
+            return OpenAIResponsesUserSimulatorClient(
+                model_name=self.model_name,
+                base_url=base_url,
+                api_key=api_key,
+                timeout_sec=self.timeout_sec,
+                max_tokens=self.max_tokens,
+            )
+        return LiteLLMUserSimulatorClient(
             model_name=self.model_name,
             timeout_sec=self.timeout_sec,
             max_tokens=self.max_tokens,
         )
-        return client.complete(messages)
 
 
 def deterministic_user_message(context: UserSimulatorContext) -> str:

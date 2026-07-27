@@ -51,7 +51,14 @@ def validate_record(record: dict[str, Any]) -> None:
     if not isinstance(interventions, list) or not interventions:
         raise ValueError(f"{instance_id}: counter_edit.interventions is empty")
     for intervention in interventions:
+        order = intervention.get("order")
+        if not isinstance(order, int) or order < 1:
+            raise ValueError(f"{instance_id}: invalid intervention order {order!r}")
         trigger = intervention.get("trigger") or {}
+        if order > 1 and trigger.get("event") != "edit":
+            raise ValueError(
+                f"{instance_id}: intervention {order} must wait for a code edit"
+            )
         for region in trigger.get("regions") or []:
             _validate_region(instance_id, region)
         patch = intervention.get("patch")

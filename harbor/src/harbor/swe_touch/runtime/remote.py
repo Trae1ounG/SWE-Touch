@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import shlex
 import tempfile
 from asyncio import Lock
@@ -33,6 +34,7 @@ from harbor.swe_touch.runtime.schemas import (
 from harbor.swe_touch.runtime.user_simulator import UserSimulator, UserSimulatorContext
 
 InterventionMode = Literal["patch_message", "text_only", "patch_only"]
+logger = logging.getLogger(__name__)
 
 
 class CounterEditController:
@@ -120,7 +122,8 @@ class CounterEditController:
                 environment=environment,
             )
             if not reserved:
-                continue
+                self.harness.release_scenario(scenario)
+                return None
             patch_error = None
             patch_applied = False
             patch_diff_sha256 = None
@@ -138,6 +141,19 @@ class CounterEditController:
                     patch_applied = True
                 except PatchApplyError as exc:
                     patch_error = str(exc)
+            if patch_error is not None:
+                self.harness.release_scenario(scenario)
+                await self._release_remote_scenario(
+                    scenario_id=scenario.scenario_id,
+                    cwd=_repo_cwd(cwd, command, self.current_instance_id),
+                    environment=environment,
+                )
+                logger.warning(
+                    "SWE-Touch patch was not applied for %s; waiting for the next matching edit: %s",
+                    scenario.scenario_id,
+                    patch_error,
+                )
+                return None
             message_visible = self.intervention_mode == "text_only" or (
                 self.intervention_mode == "patch_message"
                 and (scenario.patch is None or patch_applied)
@@ -240,6 +256,21 @@ class CounterEditController:
             timeout_sec=10,
         )
         return result.return_code == 0
+
+    async def _release_remote_scenario(
+        self,
+        *,
+        scenario_id: str,
+        cwd: str,
+        environment: BaseEnvironment,
+    ) -> None:
+        sentinel_name = re.sub(r"[^A-Za-z0-9_.-]", "_", scenario_id)
+        sentinel_path = f".git/swe-touch/interventions/{sentinel_name}"
+        await environment.exec(
+            command=f"rm -f {shlex.quote(sentinel_path)}",
+            cwd=cwd,
+            timeout_sec=10,
+        )
 
     async def _apply_remote_patch(
         self,

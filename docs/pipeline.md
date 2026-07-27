@@ -63,10 +63,24 @@ For a candidate edit `u` and reference repair `g`, the gate runs three fresh tas
 3. applying `u` and then `g` still does not resolve the task.
 
 An apply error or missing verifier result is an infrastructure error, not a failed benchmark outcome. Re-run those gate variants before assembly.
+The gate artifact represents such incomplete outcomes with `resolved: null`; it
+never drops a candidate merely because one or more result files are missing.
 
 ## Evaluation invariants
 
 Paired job generation holds the task set, model, Mini-SWE-Agent interface, step budget, verifier, retries, and concurrency configuration fixed. Counter-Edit adds only the scenario directory and current user simulator. A simulator response is appended to the conversation as a new `role=user` message after the triggering tool observation; command stdout, file content, and other tool results remain unchanged. The runtime writes every intervention and simulator output into the trial agent log directory.
+
+The simulator uses the configured LiteLLM model by default. Deployments with an
+OpenAI-compatible Responses-only endpoint can set
+`SWE_TOUCH_SIMULATOR_RESPONSES_BASE_URL` and `SWE_TOUCH_SIMULATOR_API_KEY`; the
+runtime then calls the same `--simulator-model` through that Responses API while
+preserving the same user-message injection contract.
+
+The first intervention uses the trigger stored for the task. The second and third
+interventions require a new edit to the target region, so repeated reads cannot
+consume all three rounds. Patch application first uses `git apply` and then a
+context-anchored fallback for regions rewritten by the agent. If neither changes
+the repository, the scenario remains pending and no user message is emitted.
 
 Before writing either job configuration, `prepare-paired` maps every release
 `instance_id` to exactly one Harbor task directory. SWE-Bench Pro records use the
