@@ -58,13 +58,13 @@ Released records can live in a Hugging Face dataset repository and are downloade
 uv run --project harbor harbor swe-touch download \
   --repo-id Trae1ounG/SWE-Touch \
   --revision v0.1.2 \
-  --output data/v0.1.0
+  --output data/v0.1.2
 
-uv run --project harbor harbor swe-touch validate-data data/v0.1.0
+uv run --project harbor harbor swe-touch validate-data data/v0.1.2
 ```
 
-The source tree also includes the versioned release bundle in `data/v0.1.0/`, so
-evaluation does not depend on Hugging Face availability. Version `v0.1.0` contains
+The source tree also includes the versioned release bundle in `data/v0.1.2/`, so
+evaluation does not depend on Hugging Face availability. Version `v0.1.2` contains
 200 SWE-bench Verified records, 25 SWE-Bench Pro records, and 25 DeepSWE records.
 Of these, 242 contain independently validated code edits and eight contain the
 documented message-only fallback. Each JSONL row contains task-critical regions,
@@ -129,7 +129,7 @@ export OPENAI_API_KEY=...  # Example; use the variable required by your provider
 
 uv run --project harbor harbor swe-touch prepare-paired \
   --tasks tasks/swebench-verified \
-  --records data/v0.1.0/swe_bench_verified.jsonl \
+  --records data/v0.1.2/swe_bench_verified.jsonl \
   --output runs/example-model \
   --model openai/example-model \
   --simulator-model openai/gpt-4o \
@@ -217,7 +217,7 @@ harbor/                        Pinned Harbor fork and Python environment
 harbor/src/harbor/swe_touch/  Construction, runtime, validation, and aggregation
 harbor/src/harbor/agents/     Mini-SWE-Agent bridge with SWE-Touch interventions
 harbor/tests/                  Contract and runtime tests
-data/v0.1.0/                  Versioned records mirrored to Hugging Face
+data/v0.1.2/                  Versioned records mirrored to Hugging Face
 schema/                       Public artifact and record schemas
 docs/                         Reproduction documentation
 ```
