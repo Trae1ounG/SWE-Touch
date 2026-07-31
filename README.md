@@ -57,7 +57,7 @@ Released records can live in a Hugging Face dataset repository and are downloade
 ```bash
 uv run --project harbor harbor swe-touch download \
   --repo-id Trae1ounG/SWE-Touch \
-  --revision v0.1.0 \
+  --revision v0.1.2 \
   --output data/v0.1.0
 
 uv run --project harbor harbor swe-touch validate-data data/v0.1.0
@@ -71,6 +71,21 @@ documented message-only fallback. Each JSONL row contains task-critical regions,
 the user edit or fallback, its trigger schedule, validation outcomes, and the
 user-simulator prompt identifier. The exact format is documented in
 [`schema/`](schema/) and [`docs/data_schema.md`](docs/data_schema.md).
+
+The released JSONL files preserve their semantic `test` split. Load one directly
+with the standard JSON loader:
+
+```python
+from datasets import load_dataset
+
+verified = load_dataset(
+    "json",
+    data_files={
+        "test": "https://huggingface.co/datasets/Trae1ounG/SWE-Touch/resolve/v0.1.2/swe_bench_verified.jsonl",
+    },
+    split="test",
+)
+```
 
 ## 🧰 Prepare Benchmark Tasks
 
