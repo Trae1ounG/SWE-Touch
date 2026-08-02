@@ -101,6 +101,8 @@
       .paper-figure a { display: block; }
       .paper-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line-dark); background: var(--white); }
       .paper-figure figcaption { margin-top: 9px; color: var(--muted); font-size: .82rem; }
+      .method-image-frame { position: relative; overflow: hidden; aspect-ratio: 3000 / 1285; border: 1px solid var(--line-dark); background: var(--white); }
+      .paper-figure .method-image-frame img { position: absolute; top: 0; left: 0; width: 100%; border: 0; transform: translateY(-5.45%); }
       .method-notes { border-top: 1px solid var(--line-dark); }
       .method-note { padding: 17px 0; border-bottom: 1px solid var(--line); }
       .method-note b { display: flex; align-items: center; gap: 9px; font-size: .9rem; }
@@ -280,7 +282,7 @@
 
           <div class="method-layout">
             <figure class="paper-figure">
-              <a href="assets/method_pipeline.png" title="Open the full-resolution method figure">
+              <a class="method-image-frame" href="assets/method_pipeline.png" title="Open the full-resolution method figure">
                 <img src="assets/method_pipeline.png" alt="SWE-Touch pipeline with task-critical region mining, user edit construction, and shared workspace evaluation">
               </a>
               <figcaption>Click the figure for the full-resolution pipeline.</figcaption>
