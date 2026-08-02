@@ -5,10 +5,13 @@
 </p>
 
 <p align="center">
-  <img src="assets/swe-touch-logo.png" width="800" alt="SWE-Touch logo">
+  <a href="https://trae1oung.github.io/SWE-Touch/">
+    <img src="assets/swe-touch-logo.png" width="800" alt="SWE-Touch logo">
+  </a>
 </p>
 
 <p align="center">
+  <a href="https://trae1oung.github.io/SWE-Touch/"><img src="https://img.shields.io/badge/Project-Page-087D78" alt="SWE-Touch Project Page"></a>
   <a href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-blue" alt="Hugging Face Dataset"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB.svg" alt="Python 3.12+"></a>
@@ -227,6 +230,7 @@ retains its Apache-2.0 license in `harbor/LICENSE`.
 
 ## 📚 Documentation
 
+- [Project page](https://trae1oung.github.io/SWE-Touch/): visual overview of the benchmark, evaluation pipeline, and main findings.
 - [`docs/pipeline.md`](docs/pipeline.md): construction artifacts, validation gates, and recovery behavior.
 - [`docs/data_schema.md`](docs/data_schema.md): released-record fields and data contracts.
 - [`schema/`](schema/): machine-readable schemas for release artifacts.

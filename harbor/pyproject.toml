@@ -37,6 +37,11 @@ harbor = "harbor.cli.main:app"
 hr = "harbor.cli.main:app"
 hb = "harbor.cli.main:app"
 
+[project.urls]
+Homepage = "https://trae1oung.github.io/SWE-Touch/"
+Repository = "https://github.com/Trae1ounG/SWE-Touch"
+Dataset = "https://huggingface.co/datasets/Trae1ounG/SWE-Touch"
+
 [build-system]
 requires = ["uv_build>=0.8.4,<0.9.0"]
 build-backend = "uv_build"
