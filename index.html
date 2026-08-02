@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="SWE-Touch evaluates coding agents when users edit the code during an ongoing task.">
+    <title>SWE-Touch | Benchmarking Coding Agents When Users Touch the Code</title>
+    <style>
+      :root {
+        --ink: #10243e;
+        --muted: #5c6b7b;
+        --paper: #fbfaf6;
+        --wash: #eaf5f4;
+        --teal: #007f7a;
+        --coral: #d85b54;
+        --gold: #d49b32;
+        --line: #cfd9dd;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      a { color: inherit; text-decoration: none; }
+      .shell { width: min(1140px, calc(100% - 40px)); margin: 0 auto; }
+      .eyebrow { color: var(--teal); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+
+      header { border-bottom: 1px solid var(--line); background: rgba(251, 250, 246, .92); }
+      .nav { min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+      .brand { display: inline-flex; align-items: center; gap: 10px; font-family: Georgia, "Times New Roman", serif; font-size: 1.33rem; font-weight: 700; }
+      .brand-mark { width: 13px; height: 13px; border-radius: 50%; background: var(--teal); box-shadow: 8px 0 0 var(--gold); }
+      .nav-links { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: .92rem; font-weight: 650; }
+      .nav-links a:hover { color: var(--teal); }
+
+      .hero { padding: 78px 0 58px; overflow: hidden; }
+      .hero-grid { display: grid; grid-template-columns: 1.13fr .87fr; align-items: center; gap: clamp(30px, 6vw, 78px); }
+      h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; letter-spacing: 0; }
+      h1 { max-width: 760px; margin: 12px 0 20px; font-size: clamp(2.65rem, 5vw, 4.8rem); line-height: 1.02; }
+      .lede { max-width: 680px; margin: 0; color: #36495d; font-size: clamp(1.03rem, 1.5vw, 1.2rem); }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+      .button { display: inline-flex; align-items: center; justify-content: center; min-height: 43px; padding: 0 17px; border: 1px solid var(--ink); font-size: .91rem; font-weight: 750; }
+      .button.primary { color: white; border-color: var(--teal); background: var(--teal); }
+      .button:hover { transform: translateY(-1px); }
+
+      .logo-wrap { position: relative; padding: 22px; background: #e5f0f0; border: 1px solid #b6d2d0; }
+      .logo-wrap::before, .logo-wrap::after { position: absolute; z-index: 0; content: ""; }
+      .logo-wrap::before { top: 22px; right: -28px; width: 96px; height: 96px; border: 13px solid rgba(216, 91, 84, .62); border-left: 0; }
+      .logo-wrap::after { left: -20px; bottom: 22px; width: 120px; border-top: 9px solid rgba(212, 155, 50, .86); }
+      .logo-wrap img { position: relative; z-index: 1; display: block; width: 100%; }
+
+      .statement { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: white; }
+      .statement-inner { display: grid; grid-template-columns: 160px 1fr; align-items: start; gap: 34px; padding: 44px 0; }
+      .statement h2 { margin: 0; font-size: 1.45rem; line-height: 1.15; }
+      .statement p { max-width: 850px; margin: 0; color: #35485a; font-size: 1.08rem; }
+
+      section { padding: 74px 0; }
+      .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 30px; }
+      .section-head h2 { margin: 6px 0 0; font-size: clamp(1.8rem, 3vw, 2.55rem); line-height: 1.05; }
+      .section-note { max-width: 375px; margin: 0; color: var(--muted); font-size: .95rem; }
+
+      .protocol { background: var(--wash); border-top: 1px solid #bcddda; border-bottom: 1px solid #bcddda; }
+      .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+      .flow-step { min-height: 280px; padding: 28px; background: var(--paper); }
+      .step-number { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-bottom: 20px; color: white; background: var(--teal); font-family: Georgia, serif; font-weight: 700; }
+      .flow-step:nth-child(2) .step-number { background: var(--coral); }
+      .flow-step:nth-child(3) .step-number { background: var(--gold); }
+      .flow h3 { margin: 0 0 8px; font-size: 1.33rem; }
+      .flow p { margin: 0; color: #415467; font-size: .96rem; }
+      .mini-code { margin-top: 22px; padding: 13px 15px; overflow: hidden; color: #dae7ed; background: #152635; font: .78rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
+      .mini-code .accent { color: #80d7d0; }
+      .mini-code .wrong { color: #ff9f92; }
+
+      .results-grid { display: grid; grid-template-columns: 1fr .97fr; gap: 46px; align-items: center; }
+      .metric-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+      .metric-list li { display: grid; grid-template-columns: 96px 1fr; gap: 18px; padding: 19px 0; border-bottom: 1px solid var(--line); }
+      .metric { color: var(--coral); font-family: Georgia, serif; font-size: 2rem; line-height: 1; }
+      .metric-list strong { display: block; margin-bottom: 2px; font-size: .98rem; }
+      .metric-list span { color: var(--muted); font-size: .91rem; }
+      .comparison { padding: 24px; color: #dbe6ea; background: #112536; }
+      .comparison h3 { margin: 0 0 18px; color: white; font-family: inherit; font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
+      .comparison-row { display: grid; grid-template-columns: 100px 1fr 45px; align-items: center; gap: 12px; margin: 15px 0; font-size: .87rem; }
+      .bar { height: 13px; background: #355266; }
+      .bar > i { display: block; height: 100%; background: #73c7c0; }
+      .bar.counter > i { background: #ed887c; }
+      .comparison small { color: #aebfc9; }
+
+      .resources { background: #f2efe8; border-top: 1px solid #dcd5c8; }
+      .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+      .resource { padding: 24px 0; border-top: 3px solid var(--teal); }
+      .resource:nth-child(2) { border-color: var(--coral); }
+      .resource:nth-child(3) { border-color: var(--gold); }
+      .resource h3 { margin: 0 0 7px; font-size: 1.28rem; }
+      .resource p { min-height: 50px; margin: 0 0 16px; color: var(--muted); font-size: .93rem; }
+      .text-link { color: var(--teal); font-size: .9rem; font-weight: 800; }
+      .text-link::after { content: "  ->"; }
+
+      footer { padding: 28px 0 36px; color: var(--muted); font-size: .85rem; }
+      footer .shell { display: flex; justify-content: space-between; gap: 24px; border-top: 1px solid var(--line); padding-top: 24px; }
+
+      @media (max-width: 760px) {
+        .nav { min-height: 64px; }
+        .nav-links { display: none; }
+        .hero { padding: 52px 0 42px; }
+        .hero-grid, .results-grid { grid-template-columns: 1fr; }
+        .logo-wrap { max-width: 470px; }
+        .statement-inner { grid-template-columns: 1fr; gap: 16px; }
+        .flow, .resource-grid { grid-template-columns: 1fr; }
+        .flow-step { min-height: 0; }
+        .section-head { display: block; }
+        .section-note { margin-top: 15px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav class="nav shell" aria-label="Main navigation">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>SWE-Touch</a>
+        <div class="nav-links">
+          <a href="#protocol">Protocol</a>
+          <a href="#results">Results</a>
+          <a href="#resources">Resources</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="shell hero-grid">
+          <div>
+            <div class="eyebrow">A benchmark for collaborative coding agents</div>
+            <h1>Benchmarking Coding Agents When Users Touch the Code</h1>
+            <p class="lede">SWE-Touch evaluates whether coding agents can continue a software repair after a user has changed the shared repository state.</p>
+            <div class="actions">
+              <a class="button primary" href="https://github.com/Trae1ounG/SWE-Touch">View code</a>
+              <a class="button" href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch">Browse dataset</a>
+            </div>
+          </div>
+          <div class="logo-wrap">
+            <img src="assets/swe-touch-logo.png" alt="SWE-Touch logo showing a coding agent and a user editing code together">
+          </div>
+        </div>
+      </section>
+
+      <section class="statement">
+        <div class="shell statement-inner">
+          <h2>Why SWE-Touch?</h2>
+          <p>Interactive coding benchmarks largely model user participation as messages. SWE-Touch adds a stronger form of interaction: a user edit changes the executable workspace that the agent must subsequently read, test, and repair.</p>
+        </div>
+      </section>
+
+      <section class="protocol" id="protocol">
+        <div class="shell">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Evaluation protocol</div>
+              <h2>One shared workspace, two authors</h2>
+            </div>
+            <p class="section-note">The task, checkout, tools, budget, and verifier remain fixed. Only the user-authored edit changes the live repository state.</p>
+          </div>
+          <div class="flow">
+            <article class="flow-step">
+              <span class="step-number">1</span>
+              <h3>Locate task-critical code</h3>
+              <p>Successful repair trajectories identify regions repeatedly reached by agents while implementing the fix.</p>
+              <div class="mini-code"><span class="accent">src/parser.py</span><br>42&nbsp;&nbsp;def parse(value):<br>43&nbsp;&nbsp;&nbsp;&nbsp;return normalize(value)</div>
+            </article>
+            <article class="flow-step">
+              <span class="step-number">2</span>
+              <h3>Construct a user edit</h3>
+              <p>A patch generator writes a sparse, locally plausible edit whose interaction with the reference repair is checked before release.</p>
+              <div class="mini-code"><span class="wrong">- return normalize(value)</span><br><span class="accent">+ return value.strip()</span></div>
+            </article>
+            <article class="flow-step">
+              <span class="step-number">3</span>
+              <h3>Evaluate in the live task</h3>
+              <p>When the agent reaches the task-critical region, SWE-Touch applies the user edit and a contextual user message, then evaluates the final repository.</p>
+              <div class="mini-code">agent: inspect -> edit -> test<br>user: edit + message<br><span class="accent">verifier: final repository</span></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="results">
+        <div class="shell results-grid">
+          <div>
+            <div class="eyebrow">Key result</div>
+            <h2>Autonomous success does not guarantee recovery after a user edit.</h2>
+            <ul class="metric-list">
+              <li><b class="metric">7.7</b><div><strong>percentage-point mean drop</strong><span>Counter-Edit lowers mean resolve rate across nine evaluated coding models on SWE-bench Verified.</span></div></li>
+              <li><b class="metric">63.3%</b><div><strong>of audited failures retain the user behavior</strong><span>Many failed runs end with the conflicting user behavior still active, while others attempt a correction but do not recover a valid solution.</span></div></li>
+              <li><b class="metric">3</b><div><strong>benchmark suites</strong><span>The protocol is evaluated on SWE-bench Verified and harder tasks from SWE-Bench Pro and DeepSWE.</span></div></li>
+            </ul>
+          </div>
+          <aside class="comparison" aria-label="Illustrative resolve rate comparison">
+            <h3>Illustrative paired outcome</h3>
+            <div class="comparison-row"><small>Vanilla</small><div class="bar"><i style="width: 80%"></i></div><strong>80%</strong></div>
+            <div class="comparison-row"><small>Counter-Edit</small><div class="bar counter"><i style="width: 70%"></i></div><strong>70%</strong></div>
+            <p><small>Resolve rate changes because the user edit is part of the executable state, not merely an additional instruction.</small></p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="resources" id="resources">
+        <div class="shell">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Release</div>
+              <h2>Reproduce the protocol</h2>
+            </div>
+          </div>
+          <div class="resource-grid">
+            <article class="resource"><h3>Code</h3><p>Harbor-based runner, data schemas, user simulator, patch validation, and reproducibility commands.</p><a class="text-link" href="https://github.com/Trae1ounG/SWE-Touch">Open repository</a></article>
+            <article class="resource"><h3>Dataset</h3><p>Released task records, task-critical regions, Counter-Edits, and validation evidence for supported benchmarks.</p><a class="text-link" href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch">Open dataset</a></article>
+            <article class="resource"><h3>Documentation</h3><p>Start with the release README for installation, data loading, validation, and the end-to-end evaluation workflow.</p><a class="text-link" href="https://github.com/Trae1ounG/SWE-Touch#readme">Read the guide</a></article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer><div class="shell"><span>SWE-Touch</span><span>Benchmarking Coding Agents When Users Touch the Code</span></div></footer>
+  </body>
+</html>
