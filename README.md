@@ -1,7 +1,7 @@
 # SWE-Touch
 
 <p align="center">
-  <strong><em>When Users Touch the Code: Benchmarking Coding Agents under User Edits</em></strong>
+  <strong><em>Benchmarking Coding Agents When Users Touch the Code</em></strong>
 </p>
 
 <p align="center">
