@@ -76,19 +76,33 @@
       .mini-code .accent { color: #80d7d0; }
       .mini-code .wrong { color: #ff9f92; }
 
-      .results-grid { display: grid; grid-template-columns: 1fr .97fr; gap: 46px; align-items: center; }
-      .metric-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-      .metric-list li { display: grid; grid-template-columns: 96px 1fr; gap: 18px; padding: 19px 0; border-bottom: 1px solid var(--line); }
+      .paper-figure { margin: 34px 0 0; }
+      .paper-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: white; }
+      .paper-figure figcaption { margin-top: 10px; color: var(--muted); font-size: .86rem; }
+
+      .metric-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 32px 0 44px; padding: 0; list-style: none; }
+      .metric-list li { padding-top: 17px; border-top: 2px solid var(--line); }
       .metric { color: var(--coral); font-family: Georgia, serif; font-size: 2rem; line-height: 1; }
-      .metric-list strong { display: block; margin-bottom: 2px; font-size: .98rem; }
-      .metric-list span { color: var(--muted); font-size: .91rem; }
-      .comparison { padding: 24px; color: #dbe6ea; background: #112536; }
-      .comparison h3 { margin: 0 0 18px; color: white; font-family: inherit; font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
-      .comparison-row { display: grid; grid-template-columns: 100px 1fr 45px; align-items: center; gap: 12px; margin: 15px 0; font-size: .87rem; }
-      .bar { height: 13px; background: #355266; }
-      .bar > i { display: block; height: 100%; background: #73c7c0; }
-      .bar.counter > i { background: #ed887c; }
-      .comparison small { color: #aebfc9; }
+      .metric-list strong { display: block; margin: 10px 0 3px; font-size: .98rem; }
+      .metric-list span { color: var(--muted); font-size: .89rem; }
+      .results-block + .results-block { margin-top: 54px; }
+      .results-block h3 { margin: 0 0 7px; font-size: 1.45rem; }
+      .results-block > p { max-width: 800px; margin: 0 0 18px; color: var(--muted); font-size: .94rem; }
+      .table-scroll { width: 100%; overflow-x: auto; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+      table { width: 100%; border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; }
+      th, td { padding: 10px 12px; border-bottom: 1px solid #dfe5e7; text-align: right; white-space: nowrap; }
+      th:first-child, td:first-child { text-align: left; }
+      thead th { color: #33495d; background: #f1f5f5; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
+      tbody tr:last-child td { border-bottom: 0; }
+      .vanilla-cell { background: rgba(85, 132, 190, .08); }
+      .counter-cell { background: rgba(216, 91, 84, .08); }
+      .delta-negative { color: #b43f3a; font-weight: 800; }
+      .delta-neutral { color: var(--muted); }
+      .retention { color: #19715d; font-weight: 750; }
+      .experiment-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 34px; align-items: start; }
+      .experiment-grid > * { min-width: 0; }
+      .analysis-band { margin-top: 58px; padding: 38px 0 0; border-top: 1px solid var(--line); }
+      .analysis-band .paper-figure { max-width: 930px; }
 
       .resources { background: #f2efe8; border-top: 1px solid #dcd5c8; }
       .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -107,10 +121,11 @@
         .nav { min-height: 64px; }
         .nav-links { display: none; }
         .hero { padding: 52px 0 42px; }
-        .hero-grid, .results-grid { grid-template-columns: 1fr; }
+        .hero-grid, .experiment-grid { grid-template-columns: 1fr; }
         .logo-wrap { max-width: 470px; }
         .statement-inner { grid-template-columns: 1fr; gap: 16px; }
         .flow, .resource-grid { grid-template-columns: 1fr; }
+        .metric-list { grid-template-columns: 1fr; gap: 18px; }
         .flow-step { min-height: 0; }
         .section-head { display: block; }
         .section-note { margin-top: 15px; }
@@ -183,26 +198,113 @@
               <div class="mini-code">agent: inspect -> edit -> test<br>user: edit + message<br><span class="accent">verifier: final repository</span></div>
             </article>
           </div>
+          <figure class="paper-figure">
+            <img src="assets/method_pipeline.png" alt="SWE-Touch method: task-critical region mining, user edit construction, and shared workspace evaluation">
+            <figcaption>The SWE-Touch pipeline mines task-critical regions from repair trajectories, validates a small user edit, and delivers it during evaluation in the shared workspace.</figcaption>
+          </figure>
         </div>
       </section>
 
       <section id="results">
-        <div class="shell results-grid">
-          <div>
-            <div class="eyebrow">Key result</div>
-            <h2>Autonomous success does not guarantee recovery after a user edit.</h2>
-            <ul class="metric-list">
-              <li><b class="metric">7.7</b><div><strong>percentage-point mean drop</strong><span>Counter-Edit lowers mean resolve rate across nine evaluated coding models on SWE-bench Verified.</span></div></li>
-              <li><b class="metric">63.3%</b><div><strong>of audited failures retain the user behavior</strong><span>Many failed runs end with the conflicting user behavior still active, while others attempt a correction but do not recover a valid solution.</span></div></li>
-              <li><b class="metric">3</b><div><strong>benchmark suites</strong><span>The protocol is evaluated on SWE-bench Verified and harder tasks from SWE-Bench Pro and DeepSWE.</span></div></li>
-            </ul>
+        <div class="shell">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Key result</div>
+              <h2>Autonomous success does not guarantee recovery after a user edit.</h2>
+            </div>
+            <p class="section-note">All resolve rates are percentages. The main SWE-bench Verified results report mean ± standard deviation over repeated runs.</p>
           </div>
-          <aside class="comparison" aria-label="Illustrative resolve rate comparison">
-            <h3>Illustrative paired outcome</h3>
-            <div class="comparison-row"><small>Vanilla</small><div class="bar"><i style="width: 80%"></i></div><strong>80%</strong></div>
-            <div class="comparison-row"><small>Counter-Edit</small><div class="bar counter"><i style="width: 70%"></i></div><strong>70%</strong></div>
-            <p><small>Resolve rate changes because the user edit is part of the executable state, not merely an additional instruction.</small></p>
-          </aside>
+
+          <ul class="metric-list">
+            <li><b class="metric">−7.7</b><strong>mean resolve-rate change</strong><span>Every evaluated model declines under Counter-Edit on SWE-bench Verified.</span></li>
+            <li><b class="metric">1.3–16.5</b><strong>points lost across models</strong><span>The effect varies sharply despite an identical evaluation protocol.</span></li>
+            <li><b class="metric">63.3%</b><strong>retained-conflict failures</strong><span>Most failed runs terminate with the conflicting user behavior still active.</span></li>
+          </ul>
+
+          <div class="results-block">
+            <h3>SWE-bench Verified</h3>
+            <p>Counter-Edit changes both absolute performance and model ordering. Retention is the share of tasks solved under Vanilla that remain solved after the user edit.</p>
+            <div class="table-scroll">
+              <table aria-label="Main results on SWE-bench Verified">
+                <thead><tr><th>Model</th><th>Vanilla resolve</th><th>Counter-Edit resolve</th><th>Δ resolve</th><th>Retention</th></tr></thead>
+                <tbody>
+                  <tr><td>Claude Opus 4.8</td><td class="vanilla-cell">85.2 ± 1.8</td><td class="counter-cell">83.3 ± 0.6</td><td class="delta-negative">−1.8</td><td class="retention">96.0</td></tr>
+                  <tr><td>GPT 5.5</td><td class="vanilla-cell">80.5 ± 1.0</td><td class="counter-cell">79.2 ± 0.6</td><td class="delta-negative">−1.3</td><td class="retention">95.0</td></tr>
+                  <tr><td>GLM 5.1</td><td class="vanilla-cell">72.7 ± 2.0</td><td class="counter-cell">68.3 ± 0.8</td><td class="delta-negative">−4.3</td><td class="retention">83.3</td></tr>
+                  <tr><td>MiniMax M2.7</td><td class="vanilla-cell">76.5 ± 1.5</td><td class="counter-cell">62.7 ± 2.4</td><td class="delta-negative">−13.8</td><td class="retention">78.1</td></tr>
+                  <tr><td>MiniMax M2.5</td><td class="vanilla-cell">75.7 ± 3.3</td><td class="counter-cell">66.2 ± 1.0</td><td class="delta-negative">−9.5</td><td class="retention">78.3</td></tr>
+                  <tr><td>Qwen 3.7 Max</td><td class="vanilla-cell">75.2 ± 1.0</td><td class="counter-cell">70.3 ± 0.8</td><td class="delta-negative">−4.8</td><td class="retention">90.3</td></tr>
+                  <tr><td>Qwen3-Coder-480B</td><td class="vanilla-cell">57.2 ± 3.5</td><td class="counter-cell">40.7 ± 1.0</td><td class="delta-negative">−16.5</td><td class="retention">60.8</td></tr>
+                  <tr><td>Kimi K2.6</td><td class="vanilla-cell">70.3 ± 2.0</td><td class="counter-cell">64.3 ± 3.4</td><td class="delta-negative">−6.0</td><td class="retention">87.2</td></tr>
+                  <tr><td>DeepSeek V4 Pro</td><td class="vanilla-cell">74.8 ± 0.8</td><td class="counter-cell">63.8 ± 1.8</td><td class="delta-negative">−11.0</td><td class="retention">81.5</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="results-block">
+            <h3>Harder repair tasks</h3>
+            <p>The same direction appears on selected SWE-Bench Pro and DeepSWE tasks, evaluated with a longer interaction budget and a trajectory-relative delivery schedule.</p>
+            <div class="table-scroll">
+              <table aria-label="Results on SWE-Bench Pro and DeepSWE">
+                <thead><tr><th rowspan="2">Model</th><th colspan="3">SWE-Bench Pro</th><th colspan="3">DeepSWE</th></tr><tr><th>Vanilla</th><th>Counter</th><th>Δ</th><th>Vanilla</th><th>Counter</th><th>Δ</th></tr></thead>
+                <tbody>
+                  <tr><td>Claude Opus 4.8</td><td class="vanilla-cell">68.0</td><td class="counter-cell">68.0</td><td class="delta-neutral">0.0</td><td class="vanilla-cell">56.0</td><td class="counter-cell">46.0</td><td class="delta-negative">−10.0</td></tr>
+                  <tr><td>GPT 5.5</td><td class="vanilla-cell">38.0</td><td class="counter-cell">38.0</td><td class="delta-neutral">0.0</td><td class="vanilla-cell">64.0</td><td class="counter-cell">56.0</td><td class="delta-negative">−8.0</td></tr>
+                  <tr><td>GLM 5.1</td><td class="vanilla-cell">43.1</td><td class="counter-cell">32.8</td><td class="delta-negative">−10.3</td><td class="vanilla-cell">19.4</td><td class="counter-cell">16.8</td><td class="delta-negative">−2.5</td></tr>
+                  <tr><td>MiniMax M2.7</td><td class="vanilla-cell">30.6</td><td class="counter-cell">24.6</td><td class="delta-negative">−6.0</td><td class="vanilla-cell">2.2</td><td class="counter-cell">2.2</td><td class="delta-neutral">0.0</td></tr>
+                  <tr><td>MiniMax M2.5</td><td class="vanilla-cell">32.6</td><td class="counter-cell">24.6</td><td class="delta-negative">−8.0</td><td class="vanilla-cell">0.0</td><td class="counter-cell">0.0</td><td class="delta-neutral">0.0</td></tr>
+                  <tr><td>Qwen 3.7 Max</td><td class="vanilla-cell">36.0</td><td class="counter-cell">26.0</td><td class="delta-negative">−10.0</td><td class="vanilla-cell">4.1</td><td class="counter-cell">2.1</td><td class="delta-negative">−2.0</td></tr>
+                  <tr><td>Qwen3-Coder-480B</td><td class="vanilla-cell">20.0</td><td class="counter-cell">14.0</td><td class="delta-negative">−6.0</td><td class="vanilla-cell">0.0</td><td class="counter-cell">0.0</td><td class="delta-neutral">0.0</td></tr>
+                  <tr><td>Kimi K2.6</td><td class="vanilla-cell">50.0</td><td class="counter-cell">48.0</td><td class="delta-negative">−2.0</td><td class="vanilla-cell">18.0</td><td class="counter-cell">12.0</td><td class="delta-negative">−6.0</td></tr>
+                  <tr><td>DeepSeek V4 Pro</td><td class="vanilla-cell">34.0</td><td class="counter-cell">32.0</td><td class="delta-negative">−2.0</td><td class="vanilla-cell">4.1</td><td class="counter-cell">2.0</td><td class="delta-negative">−2.1</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="results-block experiment-grid">
+            <div>
+              <h3>What part of the interaction matters?</h3>
+              <p>A controlled ablation separates the user message, the code edit, and their combined delivery on SWE-bench Verified.</p>
+              <div class="table-scroll">
+                <table aria-label="Message, code edit, and frequency ablation">
+                  <thead><tr><th>Condition</th><th>GPT 5.5</th><th>GLM 5.1</th><th>M2.7</th><th>Qwen 3.7</th></tr></thead>
+                  <tbody>
+                    <tr><td>Vanilla</td><td>81.5</td><td>70.5</td><td>76.5</td><td>74.0</td></tr>
+                    <tr><td>Message, K=3</td><td>79.5</td><td>73.0</td><td>76.5</td><td>77.0</td></tr>
+                    <tr><td>Code edit, K=3</td><td>80.5</td><td>66.5</td><td>67.0</td><td>71.5</td></tr>
+                    <tr><td>Both, K=1</td><td>78.5</td><td>72.0</td><td>64.5</td><td>71.5</td></tr>
+                    <tr><td>Both, K=3</td><td>79.5</td><td>69.0</td><td>64.5</td><td>71.0</td></tr>
+                    <tr><td>Both, K=5</td><td>78.0</td><td>69.0</td><td>60.0</td><td>69.0</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <h3>Patch scale</h3>
+              <p>Counter-Edits remain local even when the underlying repair is much larger.</p>
+              <div class="table-scroll">
+                <table aria-label="Average reference repair and Counter-Edit size">
+                  <thead><tr><th>Dataset</th><th>Reference lines/files</th><th>Counter lines/files</th></tr></thead>
+                  <tbody>
+                    <tr><td>Verified</td><td>13.3 / 1.20</td><td>7.0 / 1.04</td></tr>
+                    <tr><td>Pro</td><td>361.0 / 5.44</td><td>13.0 / 1.40</td></tr>
+                    <tr><td>DeepSWE</td><td>730.2 / 7.24</td><td>10.8 / 1.52</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-band">
+            <h3>How agents fail after the edit</h3>
+            <p>The analysis distinguishes retained conflicts from agents that replace the edit incorrectly, reconcile it only partially, or pursue an unrelated repair.</p>
+            <figure class="paper-figure">
+              <img src="assets/failure_mode_analysis.png" alt="Failure-mode distribution and user-edit revision rates by model">
+              <figcaption>Failure modes and edit-response behavior on SWE-bench Verified. Models that revise or remove the user edit more often tend to experience smaller resolve-rate drops.</figcaption>
+            </figure>
+          </div>
         </div>
       </section>
 
