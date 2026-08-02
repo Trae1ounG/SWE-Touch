@@ -3,18 +3,25 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="SWE-Touch evaluates coding agents when users edit the code during an ongoing task.">
+    <meta name="description" content="SWE-Touch evaluates how coding agents respond when users edit the code during an ongoing software task.">
     <title>SWE-Touch | Benchmarking Coding Agents When Users Touch the Code</title>
     <style>
       :root {
         --ink: #10243e;
-        --muted: #5c6b7b;
+        --ink-soft: #31465a;
+        --muted: #657383;
         --paper: #fbfaf6;
+        --white: #ffffff;
         --wash: #eaf5f4;
-        --teal: #007f7a;
+        --teal: #087d78;
+        --teal-dark: #075d5a;
         --coral: #d85b54;
+        --coral-soft: #fae9e6;
         --gold: #d49b32;
-        --line: #cfd9dd;
+        --blue: #527fb4;
+        --line: #ced9dc;
+        --line-dark: #9eb0b7;
+        --shadow: 0 14px 36px rgba(16, 36, 62, .08);
       }
 
       * { box-sizing: border-box; }
@@ -28,107 +35,178 @@
       }
 
       a { color: inherit; text-decoration: none; }
+      img { max-width: 100%; }
       .shell { width: min(1140px, calc(100% - 40px)); margin: 0 auto; }
-      .eyebrow { color: var(--teal); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .eyebrow { color: var(--teal); font-size: .76rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
-      header { border-bottom: 1px solid var(--line); background: rgba(251, 250, 246, .92); }
-      .nav { min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
-      .brand { display: inline-flex; align-items: center; gap: 10px; font-family: Georgia, "Times New Roman", serif; font-size: 1.33rem; font-weight: 700; }
-      .brand-mark { width: 13px; height: 13px; border-radius: 50%; background: var(--teal); box-shadow: 8px 0 0 var(--gold); }
-      .nav-links { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: .92rem; font-weight: 650; }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid rgba(206, 217, 220, .9);
+        background: rgba(251, 250, 246, .94);
+        backdrop-filter: blur(12px);
+      }
+      .nav { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+      .brand { display: inline-flex; align-items: center; gap: 10px; font-family: Georgia, "Times New Roman", serif; font-size: 1.27rem; font-weight: 700; }
+      .brand-mark { width: 12px; height: 12px; border-radius: 50%; background: var(--teal); box-shadow: 8px 0 0 var(--gold); }
+      .nav-links { display: flex; align-items: center; gap: 23px; color: var(--muted); font-size: .88rem; font-weight: 700; }
       .nav-links a:hover { color: var(--teal); }
 
-      .hero { padding: 78px 0 58px; overflow: hidden; }
-      .hero-grid { display: grid; grid-template-columns: 1.13fr .87fr; align-items: center; gap: clamp(30px, 6vw, 78px); }
-      h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; letter-spacing: 0; }
-      h1 { max-width: 760px; margin: 12px 0 20px; font-size: clamp(2.65rem, 5vw, 4.8rem); line-height: 1.02; }
-      .lede { max-width: 680px; margin: 0; color: #36495d; font-size: clamp(1.03rem, 1.5vw, 1.2rem); }
-      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-      .button { display: inline-flex; align-items: center; justify-content: center; min-height: 43px; padding: 0 17px; border: 1px solid var(--ink); font-size: .91rem; font-weight: 750; }
+      h1, h2, h3, h4 { font-family: Georgia, "Times New Roman", serif; letter-spacing: 0; }
+      h1 { max-width: 690px; margin: 10px 0 18px; font-size: clamp(2.55rem, 4.8vw, 4.35rem); line-height: 1.01; }
+      h2 { margin: 6px 0 0; font-size: clamp(1.8rem, 3vw, 2.5rem); line-height: 1.08; }
+      h3 { margin: 0; font-size: 1.4rem; line-height: 1.18; }
+      p { text-wrap: pretty; }
+
+      .hero { padding: 54px 0 46px; overflow: hidden; }
+      .hero-grid { display: grid; grid-template-columns: 1.22fr .78fr; align-items: center; gap: clamp(28px, 5vw, 66px); }
+      .lede { max-width: 690px; margin: 0; color: var(--ink-soft); font-size: clamp(1rem, 1.35vw, 1.14rem); }
+      .author-line { margin: 17px 0 0; color: var(--muted); font-size: .86rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+      .button { display: inline-flex; align-items: center; justify-content: center; min-height: 41px; padding: 0 16px; border: 1px solid var(--ink); font-size: .88rem; font-weight: 780; transition: transform .15s ease, background .15s ease; }
       .button.primary { color: white; border-color: var(--teal); background: var(--teal); }
       .button:hover { transform: translateY(-1px); }
+      .logo-wrap { padding: 22px; border: 1px solid #b8d1cf; background: var(--wash); box-shadow: var(--shadow); }
+      .logo-wrap img { display: block; width: 100%; }
 
-      .logo-wrap { position: relative; padding: 22px; background: #e5f0f0; border: 1px solid #b6d2d0; }
-      .logo-wrap::before, .logo-wrap::after { position: absolute; z-index: 0; content: ""; }
-      .logo-wrap::before { top: 22px; right: -28px; width: 96px; height: 96px; border: 13px solid rgba(216, 91, 84, .62); border-left: 0; }
-      .logo-wrap::after { left: -20px; bottom: 22px; width: 120px; border-top: 9px solid rgba(212, 155, 50, .86); }
-      .logo-wrap img { position: relative; z-index: 1; display: block; width: 100%; }
+      .hero-facts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 30px; border-top: 1px solid var(--line); }
+      .hero-fact { padding: 15px 16px 0 0; }
+      .hero-fact b { display: block; color: var(--teal-dark); font: 700 1.35rem/1 Georgia, serif; }
+      .hero-fact span { display: block; margin-top: 5px; color: var(--muted); font-size: .78rem; }
 
-      .statement { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: white; }
-      .statement-inner { display: grid; grid-template-columns: 160px 1fr; align-items: start; gap: 34px; padding: 44px 0; }
-      .statement h2 { margin: 0; font-size: 1.45rem; line-height: 1.15; }
-      .statement p { max-width: 850px; margin: 0; color: #35485a; font-size: 1.08rem; }
+      .question-band { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--white); }
+      .question-inner { display: grid; grid-template-columns: 150px 1fr; gap: 32px; padding: 35px 0; }
+      .question-inner h2 { margin: 2px 0 0; font-size: 1.3rem; }
+      .question-copy { margin: 0; color: var(--ink-soft); font: 1.16rem/1.5 Georgia, "Times New Roman", serif; }
+      .question-copy strong { color: var(--teal-dark); }
 
-      section { padding: 74px 0; }
-      .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 30px; }
-      .section-head h2 { margin: 6px 0 0; font-size: clamp(1.8rem, 3vw, 2.55rem); line-height: 1.05; }
-      .section-note { max-width: 375px; margin: 0; color: var(--muted); font-size: .95rem; }
+      section { padding: 68px 0; }
+      .section-head { display: flex; justify-content: space-between; align-items: end; gap: 28px; margin-bottom: 28px; }
+      .section-note { max-width: 400px; margin: 0; color: var(--muted); font-size: .91rem; }
 
-      .protocol { background: var(--wash); border-top: 1px solid #bcddda; border-bottom: 1px solid #bcddda; }
-      .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--line); background: var(--line); }
-      .flow-step { min-height: 280px; padding: 28px; background: var(--paper); }
-      .step-number { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-bottom: 20px; color: white; background: var(--teal); font-family: Georgia, serif; font-weight: 700; }
-      .flow-step:nth-child(2) .step-number { background: var(--coral); }
-      .flow-step:nth-child(3) .step-number { background: var(--gold); }
-      .flow h3 { margin: 0 0 8px; font-size: 1.33rem; }
-      .flow p { margin: 0; color: #415467; font-size: .96rem; }
-      .mini-code { margin-top: 22px; padding: 13px 15px; overflow: hidden; color: #dae7ed; background: #152635; font: .78rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
-      .mini-code .accent { color: #80d7d0; }
-      .mini-code .wrong { color: #ff9f92; }
+      .protocol { background: var(--wash); border-bottom: 1px solid #bbd9d6; }
+      .condition-strip { display: grid; grid-template-columns: 1fr 70px 1fr; align-items: stretch; margin-bottom: 28px; border: 1px solid var(--line-dark); background: var(--white); }
+      .condition { padding: 21px 24px; }
+      .condition.counter { background: var(--coral-soft); }
+      .condition-label { display: inline-block; margin-bottom: 7px; color: var(--blue); font-size: .75rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+      .counter .condition-label { color: var(--coral); }
+      .condition h3 { margin-bottom: 5px; font-size: 1.18rem; }
+      .condition p { margin: 0; color: var(--muted); font-size: .88rem; }
+      .versus { display: grid; place-items: center; color: var(--muted); border-left: 1px solid var(--line); border-right: 1px solid var(--line); font-size: .76rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 
-      .paper-figure { margin: 34px 0 0; }
-      .paper-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: white; }
-      .paper-figure figcaption { margin-top: 10px; color: var(--muted); font-size: .86rem; }
+      .method-layout { display: grid; grid-template-columns: minmax(0, 1fr) 246px; gap: 24px; align-items: start; }
+      .paper-figure { margin: 0; }
+      .paper-figure a { display: block; }
+      .paper-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line-dark); background: var(--white); }
+      .paper-figure figcaption { margin-top: 9px; color: var(--muted); font-size: .82rem; }
+      .method-notes { border-top: 1px solid var(--line-dark); }
+      .method-note { padding: 17px 0; border-bottom: 1px solid var(--line); }
+      .method-note b { display: flex; align-items: center; gap: 9px; font-size: .9rem; }
+      .method-note i { display: inline-grid; flex: 0 0 auto; place-items: center; width: 25px; height: 25px; color: white; background: var(--teal); border-radius: 50%; font: normal 700 .75rem Georgia, serif; }
+      .method-note:nth-child(2) i { background: var(--coral); }
+      .method-note:nth-child(3) i { background: var(--gold); }
+      .method-note p { margin: 6px 0 0 34px; color: var(--muted); font-size: .83rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 19px; }
+      .control { padding: 6px 9px; color: var(--teal-dark); border: 1px solid #acd0cd; background: rgba(255,255,255,.55); font-size: .74rem; font-weight: 750; }
 
-      .metric-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 32px 0 44px; padding: 0; list-style: none; }
-      .metric-list li { padding-top: 17px; border-top: 2px solid var(--line); }
-      .metric { color: var(--coral); font-family: Georgia, serif; font-size: 2rem; line-height: 1; }
-      .metric-list strong { display: block; margin: 10px 0 3px; font-size: .98rem; }
-      .metric-list span { color: var(--muted); font-size: .89rem; }
+      .findings { display: grid; grid-template-columns: repeat(3, 1fr); margin: 29px 0 44px; border-top: 1px solid var(--line-dark); border-bottom: 1px solid var(--line-dark); }
+      .finding { padding: 20px 24px 20px 0; }
+      .finding + .finding { padding-left: 24px; border-left: 1px solid var(--line); }
+      .finding-number { display: block; color: var(--coral); font: 700 2.1rem/1 Georgia, serif; }
+      .finding strong { display: block; margin: 9px 0 3px; font-size: .92rem; }
+      .finding span { display: block; color: var(--muted); font-size: .81rem; }
+
       .results-block + .results-block { margin-top: 54px; }
-      .results-block h3 { margin: 0 0 7px; font-size: 1.45rem; }
-      .results-block > p { max-width: 800px; margin: 0 0 18px; color: var(--muted); font-size: .94rem; }
+      .block-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 17px; }
+      .block-head p { max-width: 600px; margin: 0; color: var(--muted); font-size: .88rem; }
+      .main-result-grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; }
+      .main-result-grid > * { min-width: 0; }
+      .delta-chart { padding: 18px 20px; border: 1px solid var(--line); background: var(--white); }
+      .delta-chart h4 { margin: 0 0 5px; font-size: 1.05rem; }
+      .delta-chart > p { margin: 0 0 16px; color: var(--muted); font-size: .77rem; }
+      .bar-row { display: grid; grid-template-columns: 88px 1fr 38px; align-items: center; gap: 9px; min-height: 30px; font-size: .72rem; }
+      .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .bar-track { height: 8px; background: #edf0f1; }
+      .bar { display: block; height: 100%; width: calc(var(--value) / 16.5 * 100%); background: var(--coral); }
+      .bar.low { background: #d99b77; }
+      .bar-value { color: #aa3d38; text-align: right; font-weight: 800; }
+
       .table-scroll { width: 100%; overflow-x: auto; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
-      table { width: 100%; border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; }
-      th, td { padding: 10px 12px; border-bottom: 1px solid #dfe5e7; text-align: right; white-space: nowrap; }
+      table { width: 100%; border-collapse: collapse; font-size: .83rem; font-variant-numeric: tabular-nums; }
+      th, td { padding: 9px 10px; border-bottom: 1px solid #dfe5e7; text-align: right; white-space: nowrap; }
       th:first-child, td:first-child { text-align: left; }
-      thead th { color: #33495d; background: #f1f5f5; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
+      thead th { color: #33495d; background: #f1f5f5; font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; }
       tbody tr:last-child td { border-bottom: 0; }
-      .vanilla-cell { background: rgba(85, 132, 190, .08); }
+      tbody tr:hover td { background-color: rgba(8, 125, 120, .045); }
+      .vanilla-cell { background: rgba(82, 127, 180, .08); }
       .counter-cell { background: rgba(216, 91, 84, .08); }
       .delta-negative { color: #b43f3a; font-weight: 800; }
       .delta-neutral { color: var(--muted); }
       .retention { color: #19715d; font-weight: 750; }
-      .experiment-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 34px; align-items: start; }
-      .experiment-grid > * { min-width: 0; }
-      .analysis-band { margin-top: 58px; padding: 38px 0 0; border-top: 1px solid var(--line); }
-      .analysis-band .paper-figure { max-width: 930px; }
+      .emphasis td:first-child { font-weight: 800; }
+      .emphasis td { border-top: 1px solid var(--line-dark); }
+      .table-key { margin: 8px 0 0; color: var(--muted); font-size: .75rem; }
 
-      .resources { background: #f2efe8; border-top: 1px solid #dcd5c8; }
-      .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-      .resource { padding: 24px 0; border-top: 3px solid var(--teal); }
+      .evidence-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 30px; align-items: start; }
+      .evidence-grid > * { min-width: 0; }
+      .takeaway { margin: 13px 0 0; padding-left: 13px; border-left: 3px solid var(--coral); color: var(--ink-soft); font-size: .84rem; }
+      .takeaway strong { color: var(--ink); }
+
+      .analysis { background: #f3f0e9; border-top: 1px solid #ded7ca; border-bottom: 1px solid #ded7ca; }
+      .analysis-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; align-items: center; }
+      .analysis-copy p { margin: 10px 0 0; color: var(--ink-soft); font-size: .91rem; }
+      .analysis-stat { margin-top: 20px; padding-top: 17px; border-top: 1px solid #cfc6b7; }
+      .analysis-stat b { color: var(--coral); font: 700 2.2rem/1 Georgia, serif; }
+      .analysis-stat span { display: block; margin-top: 6px; color: var(--muted); font-size: .8rem; }
+
+      .resources { background: var(--white); }
+      .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+      .resource { padding: 20px 0; border-top: 3px solid var(--teal); }
       .resource:nth-child(2) { border-color: var(--coral); }
       .resource:nth-child(3) { border-color: var(--gold); }
-      .resource h3 { margin: 0 0 7px; font-size: 1.28rem; }
-      .resource p { min-height: 50px; margin: 0 0 16px; color: var(--muted); font-size: .93rem; }
-      .text-link { color: var(--teal); font-size: .9rem; font-weight: 800; }
+      .resource h3 { margin-bottom: 7px; font-size: 1.2rem; }
+      .resource p { min-height: 47px; margin: 0 0 14px; color: var(--muted); font-size: .87rem; }
+      .text-link { color: var(--teal); font-size: .84rem; font-weight: 800; }
       .text-link::after { content: "  ->"; }
 
-      footer { padding: 28px 0 36px; color: var(--muted); font-size: .85rem; }
-      footer .shell { display: flex; justify-content: space-between; gap: 24px; border-top: 1px solid var(--line); padding-top: 24px; }
+      footer { padding: 25px 0 34px; color: var(--muted); font-size: .8rem; }
+      footer .shell { display: flex; justify-content: space-between; gap: 24px; border-top: 1px solid var(--line); padding-top: 22px; }
 
-      @media (max-width: 760px) {
-        .nav { min-height: 64px; }
+      @media (max-width: 900px) {
+        .hero-grid, .method-layout, .main-result-grid, .analysis-grid { grid-template-columns: 1fr; }
+        .logo-wrap { max-width: 540px; }
+        .method-notes { display: grid; grid-template-columns: repeat(3, 1fr); }
+        .method-note { padding: 15px 12px; border-top: 1px solid var(--line); }
+        .method-note + .method-note { border-left: 1px solid var(--line); }
+        .method-note p { margin-left: 0; }
+        .evidence-grid { grid-template-columns: 1fr; }
+        .delta-chart { max-width: 600px; }
+      }
+
+      @media (max-width: 680px) {
+        .shell { width: min(100% - 26px, 1140px); }
+        .nav { min-height: 60px; }
         .nav-links { display: none; }
-        .hero { padding: 52px 0 42px; }
-        .hero-grid, .experiment-grid { grid-template-columns: 1fr; }
-        .logo-wrap { max-width: 470px; }
-        .statement-inner { grid-template-columns: 1fr; gap: 16px; }
-        .flow, .resource-grid { grid-template-columns: 1fr; }
-        .metric-list { grid-template-columns: 1fr; gap: 18px; }
-        .flow-step { min-height: 0; }
-        .section-head { display: block; }
-        .section-note { margin-top: 15px; }
+        .hero { padding: 39px 0 34px; }
+        h1 { font-size: clamp(2.2rem, 12vw, 3.3rem); }
+        .hero-facts { grid-template-columns: 1fr; }
+        .hero-fact { display: flex; align-items: baseline; gap: 10px; padding-top: 11px; }
+        .hero-fact span { margin-top: 0; }
+        .question-inner { grid-template-columns: 1fr; gap: 10px; padding: 28px 0; }
+        section { padding: 52px 0; }
+        .section-head, .block-head { display: block; }
+        .section-note, .block-head p { margin-top: 11px; }
+        .condition-strip { grid-template-columns: 1fr; }
+        .versus { min-height: 37px; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .method-notes, .findings, .resource-grid { grid-template-columns: 1fr; }
+        .method-note + .method-note { border-left: 0; }
+        .finding { padding: 17px 0; }
+        .finding + .finding { padding-left: 0; border-top: 1px solid var(--line); border-left: 0; }
+        .bar-row { grid-template-columns: 78px 1fr 37px; }
+        footer .shell { display: block; }
+        footer span { display: block; margin-top: 5px; }
       }
     </style>
   </head>
@@ -137,8 +215,9 @@
       <nav class="nav shell" aria-label="Main navigation">
         <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>SWE-Touch</a>
         <div class="nav-links">
-          <a href="#protocol">Protocol</a>
+          <a href="#method">Method</a>
           <a href="#results">Results</a>
+          <a href="#analysis">Analysis</a>
           <a href="#resources">Resources</a>
         </div>
       </nav>
@@ -148,12 +227,18 @@
       <section class="hero">
         <div class="shell hero-grid">
           <div>
-            <div class="eyebrow">A benchmark for collaborative coding agents</div>
+            <div class="eyebrow">User-agent interaction beyond messages</div>
             <h1>Benchmarking Coding Agents When Users Touch the Code</h1>
-            <p class="lede">SWE-Touch evaluates whether coding agents can continue a software repair after a user has changed the shared repository state.</p>
+            <p class="lede">SWE-Touch tests whether a coding agent can complete a software repair after a user has directly changed the code in their shared workspace.</p>
+            <p class="author-line">Yuqiao Tan · Jinxiang Meng · Fangyu Lei · Minzheng Wang · Shizhu He · Jun Zhao · Kang Liu</p>
             <div class="actions">
-              <a class="button primary" href="https://github.com/Trae1ounG/SWE-Touch">View code</a>
-              <a class="button" href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch">Browse dataset</a>
+              <a class="button primary" href="https://github.com/Trae1ounG/SWE-Touch">Code &amp; documentation</a>
+              <a class="button" href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch">Dataset</a>
+            </div>
+            <div class="hero-facts" aria-label="Evaluation scope">
+              <div class="hero-fact"><b>9</b><span>coding models</span></div>
+              <div class="hero-fact"><b>3</b><span>repair benchmarks</span></div>
+              <div class="hero-fact"><b>−7.7</b><span>mean points on Verified</span></div>
             </div>
           </div>
           <div class="logo-wrap">
@@ -162,46 +247,55 @@
         </div>
       </section>
 
-      <section class="statement">
-        <div class="shell statement-inner">
-          <h2>Why SWE-Touch?</h2>
-          <p>Interactive coding benchmarks largely model user participation as messages. SWE-Touch adds a stronger form of interaction: a user edit changes the executable workspace that the agent must subsequently read, test, and repair.</p>
+      <section class="question-band">
+        <div class="shell question-inner">
+          <h2>Research question</h2>
+          <p class="question-copy">When a user contributes code during an ongoing task, can the agent <strong>interpret that edit against the issue, repository, and tests</strong> and still reach a correct solution?</p>
         </div>
       </section>
 
-      <section class="protocol" id="protocol">
+      <section class="protocol" id="method">
         <div class="shell">
           <div class="section-head">
             <div>
-              <div class="eyebrow">Evaluation protocol</div>
-              <h2>One shared workspace, two authors</h2>
+              <div class="eyebrow">Evaluation design</div>
+              <h2>From autonomous repair to a shared workspace</h2>
             </div>
-            <p class="section-note">The task, checkout, tools, budget, and verifier remain fixed. Only the user-authored edit changes the live repository state.</p>
+            <p class="section-note">Each task is evaluated under matched conditions. The user edit is the only change to the live task state.</p>
           </div>
-          <div class="flow">
-            <article class="flow-step">
-              <span class="step-number">1</span>
-              <h3>Locate task-critical code</h3>
-              <p>Successful repair trajectories identify regions repeatedly reached by agents while implementing the fix.</p>
-              <div class="mini-code"><span class="accent">src/parser.py</span><br>42&nbsp;&nbsp;def parse(value):<br>43&nbsp;&nbsp;&nbsp;&nbsp;return normalize(value)</div>
+
+          <div class="condition-strip" aria-label="Vanilla and Counter-Edit conditions">
+            <article class="condition">
+              <span class="condition-label">Vanilla</span>
+              <h3>The agent repairs the original checkout</h3>
+              <p>The issue, repository, tools, verifier, and interaction budget follow the standard autonomous setting.</p>
             </article>
-            <article class="flow-step">
-              <span class="step-number">2</span>
-              <h3>Construct a user edit</h3>
-              <p>A patch generator writes a sparse, locally plausible edit whose interaction with the reference repair is checked before release.</p>
-              <div class="mini-code"><span class="wrong">- return normalize(value)</span><br><span class="accent">+ return value.strip()</span></div>
-            </article>
-            <article class="flow-step">
-              <span class="step-number">3</span>
-              <h3>Evaluate in the live task</h3>
-              <p>When the agent reaches the task-critical region, SWE-Touch applies the user edit and a contextual user message, then evaluates the final repository.</p>
-              <div class="mini-code">agent: inspect -> edit -> test<br>user: edit + message<br><span class="accent">verifier: final repository</span></div>
+            <div class="versus">vs.</div>
+            <article class="condition counter">
+              <span class="condition-label">Counter-Edit</span>
+              <h3>A user changes relevant code during the repair</h3>
+              <p>A small, plausible but task-conflicting edit and a contextual user message enter the same live workspace.</p>
             </article>
           </div>
-          <figure class="paper-figure">
-            <img src="assets/method_pipeline.png" alt="SWE-Touch method: task-critical region mining, user edit construction, and shared workspace evaluation">
-            <figcaption>The SWE-Touch pipeline mines task-critical regions from repair trajectories, validates a small user edit, and delivers it during evaluation in the shared workspace.</figcaption>
-          </figure>
+
+          <div class="method-layout">
+            <figure class="paper-figure">
+              <a href="assets/method_pipeline.png" title="Open the full-resolution method figure">
+                <img src="assets/method_pipeline.png" alt="SWE-Touch pipeline with task-critical region mining, user edit construction, and shared workspace evaluation">
+              </a>
+              <figcaption>Click the figure for the full-resolution pipeline.</figcaption>
+            </figure>
+            <aside>
+              <div class="method-notes">
+                <div class="method-note"><b><i>1</i>Mine critical regions</b><p>Aggregate code locations touched by successful repair trajectories.</p></div>
+                <div class="method-note"><b><i>2</i>Generate and validate</b><p>Build a sparse edit that fails alone and still blocks the reference repair.</p></div>
+                <div class="method-note"><b><i>3</i>Deliver during repair</b><p>Apply the edit when the evaluated agent reaches the relevant code.</p></div>
+              </div>
+              <div class="controls" aria-label="Controlled variables">
+                <span class="control">same issue</span><span class="control">same checkout</span><span class="control">same tools</span><span class="control">same budget</span><span class="control">same verifier</span>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
 
@@ -209,42 +303,64 @@
         <div class="shell">
           <div class="section-head">
             <div>
-              <div class="eyebrow">Key result</div>
-              <h2>Autonomous success does not guarantee recovery after a user edit.</h2>
+              <div class="eyebrow">Main evidence</div>
+              <h2>User edits expose a gap hidden by autonomous repair</h2>
             </div>
-            <p class="section-note">All resolve rates are percentages. The main SWE-bench Verified results report mean ± standard deviation over repeated runs.</p>
+            <p class="section-note">Resolve rates are percentages. Verified results report mean ± standard deviation.</p>
           </div>
 
-          <ul class="metric-list">
-            <li><b class="metric">−7.7</b><strong>mean resolve-rate change</strong><span>Every evaluated model declines under Counter-Edit on SWE-bench Verified.</span></li>
-            <li><b class="metric">1.3–16.5</b><strong>points lost across models</strong><span>The effect varies sharply despite an identical evaluation protocol.</span></li>
-            <li><b class="metric">63.3%</b><strong>retained-conflict failures</strong><span>Most failed runs terminate with the conflicting user behavior still active.</span></li>
-          </ul>
-
-          <div class="results-block">
-            <h3>SWE-bench Verified</h3>
-            <p>Counter-Edit changes both absolute performance and model ordering. Retention is the share of tasks solved under Vanilla that remain solved after the user edit.</p>
-            <div class="table-scroll">
-              <table aria-label="Main results on SWE-bench Verified">
-                <thead><tr><th>Model</th><th>Vanilla resolve</th><th>Counter-Edit resolve</th><th>Δ resolve</th><th>Retention</th></tr></thead>
-                <tbody>
-                  <tr><td>Claude Opus 4.8</td><td class="vanilla-cell">85.2 ± 1.8</td><td class="counter-cell">83.3 ± 0.6</td><td class="delta-negative">−1.8</td><td class="retention">96.0</td></tr>
-                  <tr><td>GPT 5.5</td><td class="vanilla-cell">80.5 ± 1.0</td><td class="counter-cell">79.2 ± 0.6</td><td class="delta-negative">−1.3</td><td class="retention">95.0</td></tr>
-                  <tr><td>GLM 5.1</td><td class="vanilla-cell">72.7 ± 2.0</td><td class="counter-cell">68.3 ± 0.8</td><td class="delta-negative">−4.3</td><td class="retention">83.3</td></tr>
-                  <tr><td>MiniMax M2.7</td><td class="vanilla-cell">76.5 ± 1.5</td><td class="counter-cell">62.7 ± 2.4</td><td class="delta-negative">−13.8</td><td class="retention">78.1</td></tr>
-                  <tr><td>MiniMax M2.5</td><td class="vanilla-cell">75.7 ± 3.3</td><td class="counter-cell">66.2 ± 1.0</td><td class="delta-negative">−9.5</td><td class="retention">78.3</td></tr>
-                  <tr><td>Qwen 3.7 Max</td><td class="vanilla-cell">75.2 ± 1.0</td><td class="counter-cell">70.3 ± 0.8</td><td class="delta-negative">−4.8</td><td class="retention">90.3</td></tr>
-                  <tr><td>Qwen3-Coder-480B</td><td class="vanilla-cell">57.2 ± 3.5</td><td class="counter-cell">40.7 ± 1.0</td><td class="delta-negative">−16.5</td><td class="retention">60.8</td></tr>
-                  <tr><td>Kimi K2.6</td><td class="vanilla-cell">70.3 ± 2.0</td><td class="counter-cell">64.3 ± 3.4</td><td class="delta-negative">−6.0</td><td class="retention">87.2</td></tr>
-                  <tr><td>DeepSeek V4 Pro</td><td class="vanilla-cell">74.8 ± 0.8</td><td class="counter-cell">63.8 ± 1.8</td><td class="delta-negative">−11.0</td><td class="retention">81.5</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="findings">
+            <div class="finding"><b class="finding-number">−7.7</b><strong>average change on SWE-bench Verified</strong><span>All nine evaluated models decline under Counter-Edit.</span></div>
+            <div class="finding"><b class="finding-number">−1.3 to −16.5</b><strong>large variation across models</strong><span>Strong autonomous scores do not imply consistent recovery.</span></div>
+            <div class="finding"><b class="finding-number">63.3%</b><strong>failures retain the conflict</strong><span>Most failed trajectories end with the user-introduced behavior still active.</span></div>
           </div>
 
-          <div class="results-block">
-            <h3>Harder repair tasks</h3>
-            <p>The same direction appears on selected SWE-Bench Pro and DeepSWE tasks, evaluated with a longer interaction budget and a trajectory-relative delivery schedule.</p>
+          <article class="results-block">
+            <div class="block-head">
+              <div><h3>SWE-bench Verified</h3></div>
+              <p>Retention is the fraction of tasks solved under Vanilla that remain solved under Counter-Edit.</p>
+            </div>
+            <div class="main-result-grid">
+              <div class="delta-chart" role="img" aria-label="Resolve-rate decrease by model under Counter-Edit">
+                <h4>Resolve-rate decrease</h4>
+                <p>Counter-Edit minus Vanilla, percentage points</p>
+                <div class="bar-row"><span class="bar-label">GPT 5.5</span><span class="bar-track"><i class="bar low" style="--value:1.3"></i></span><span class="bar-value">−1.3</span></div>
+                <div class="bar-row"><span class="bar-label">Claude 4.8</span><span class="bar-track"><i class="bar low" style="--value:1.8"></i></span><span class="bar-value">−1.8</span></div>
+                <div class="bar-row"><span class="bar-label">GLM 5.1</span><span class="bar-track"><i class="bar low" style="--value:4.3"></i></span><span class="bar-value">−4.3</span></div>
+                <div class="bar-row"><span class="bar-label">Qwen 3.7</span><span class="bar-track"><i class="bar low" style="--value:4.8"></i></span><span class="bar-value">−4.8</span></div>
+                <div class="bar-row"><span class="bar-label">Kimi K2.6</span><span class="bar-track"><i class="bar" style="--value:6"></i></span><span class="bar-value">−6.0</span></div>
+                <div class="bar-row"><span class="bar-label">MiniMax M2.5</span><span class="bar-track"><i class="bar" style="--value:9.5"></i></span><span class="bar-value">−9.5</span></div>
+                <div class="bar-row"><span class="bar-label">DeepSeek V4</span><span class="bar-track"><i class="bar" style="--value:11"></i></span><span class="bar-value">−11.0</span></div>
+                <div class="bar-row"><span class="bar-label">MiniMax M2.7</span><span class="bar-track"><i class="bar" style="--value:13.8"></i></span><span class="bar-value">−13.8</span></div>
+                <div class="bar-row"><span class="bar-label">Qwen Coder</span><span class="bar-track"><i class="bar" style="--value:16.5"></i></span><span class="bar-value">−16.5</span></div>
+              </div>
+              <div>
+                <div class="table-scroll">
+                  <table aria-label="Main results on SWE-bench Verified">
+                    <thead><tr><th>Model</th><th>Vanilla</th><th>Counter-Edit</th><th>Δ</th><th>Retention</th></tr></thead>
+                    <tbody>
+                      <tr><td>Claude Opus 4.8</td><td class="vanilla-cell">85.2 ± 1.8</td><td class="counter-cell">83.3 ± 0.6</td><td class="delta-negative">−1.8</td><td class="retention">96.0</td></tr>
+                      <tr><td>GPT 5.5</td><td class="vanilla-cell">80.5 ± 1.0</td><td class="counter-cell">79.2 ± 0.6</td><td class="delta-negative">−1.3</td><td class="retention">95.0</td></tr>
+                      <tr><td>GLM 5.1</td><td class="vanilla-cell">72.7 ± 2.0</td><td class="counter-cell">68.3 ± 0.8</td><td class="delta-negative">−4.3</td><td class="retention">83.3</td></tr>
+                      <tr><td>MiniMax M2.7</td><td class="vanilla-cell">76.5 ± 1.5</td><td class="counter-cell">62.7 ± 2.4</td><td class="delta-negative">−13.8</td><td class="retention">78.1</td></tr>
+                      <tr><td>MiniMax M2.5</td><td class="vanilla-cell">75.7 ± 3.3</td><td class="counter-cell">66.2 ± 1.0</td><td class="delta-negative">−9.5</td><td class="retention">78.3</td></tr>
+                      <tr><td>Qwen 3.7 Max</td><td class="vanilla-cell">75.2 ± 1.0</td><td class="counter-cell">70.3 ± 0.8</td><td class="delta-negative">−4.8</td><td class="retention">90.3</td></tr>
+                      <tr><td>Qwen3-Coder-480B</td><td class="vanilla-cell">57.2 ± 3.5</td><td class="counter-cell">40.7 ± 1.0</td><td class="delta-negative">−16.5</td><td class="retention">60.8</td></tr>
+                      <tr><td>Kimi K2.6</td><td class="vanilla-cell">70.3 ± 2.0</td><td class="counter-cell">64.3 ± 3.4</td><td class="delta-negative">−6.0</td><td class="retention">87.2</td></tr>
+                      <tr><td>DeepSeek V4 Pro</td><td class="vanilla-cell">74.8 ± 0.8</td><td class="counter-cell">63.8 ± 1.8</td><td class="delta-negative">−11.0</td><td class="retention">81.5</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="takeaway"><strong>Finding.</strong> The ordering changes substantially: Qwen3-Coder-480B and MiniMax M2.7 lose more than 13 points, while GPT 5.5 and Claude Opus 4.8 retain over 95% of their Vanilla-solved tasks.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="results-block">
+            <div class="block-head">
+              <div><h3>Harder repair tasks</h3></div>
+              <p>Selected SWE-Bench Pro and DeepSWE tasks use a longer budget and trajectory-relative delivery.</p>
+            </div>
             <div class="table-scroll">
               <table aria-label="Results on SWE-Bench Pro and DeepSWE">
                 <thead><tr><th rowspan="2">Model</th><th colspan="3">SWE-Bench Pro</th><th colspan="3">DeepSWE</th></tr><tr><th>Vanilla</th><th>Counter</th><th>Δ</th><th>Vanilla</th><th>Counter</th><th>Δ</th></tr></thead>
@@ -258,17 +374,18 @@
                   <tr><td>Qwen3-Coder-480B</td><td class="vanilla-cell">20.0</td><td class="counter-cell">14.0</td><td class="delta-negative">−6.0</td><td class="vanilla-cell">0.0</td><td class="counter-cell">0.0</td><td class="delta-neutral">0.0</td></tr>
                   <tr><td>Kimi K2.6</td><td class="vanilla-cell">50.0</td><td class="counter-cell">48.0</td><td class="delta-negative">−2.0</td><td class="vanilla-cell">18.0</td><td class="counter-cell">12.0</td><td class="delta-negative">−6.0</td></tr>
                   <tr><td>DeepSeek V4 Pro</td><td class="vanilla-cell">34.0</td><td class="counter-cell">32.0</td><td class="delta-negative">−2.0</td><td class="vanilla-cell">4.1</td><td class="counter-cell">2.0</td><td class="delta-negative">−2.1</td></tr>
+                  <tr class="emphasis"><td>Mean</td><td class="vanilla-cell">39.1</td><td class="counter-cell">34.2</td><td class="delta-negative">−4.9</td><td class="vanilla-cell">18.6</td><td class="counter-cell">15.2</td><td class="delta-negative">−3.4</td></tr>
                 </tbody>
               </table>
             </div>
-          </div>
+            <p class="takeaway"><strong>Finding.</strong> The aggregate direction persists on both harder benchmarks, although the effect varies by model and task family.</p>
+          </article>
 
-          <div class="results-block experiment-grid">
+          <article class="results-block evidence-grid">
             <div>
-              <h3>What part of the interaction matters?</h3>
-              <p>A controlled ablation separates the user message, the code edit, and their combined delivery on SWE-bench Verified.</p>
+              <div class="block-head"><div><h3>Message, edit, and frequency</h3></div></div>
               <div class="table-scroll">
-                <table aria-label="Message, code edit, and frequency ablation">
+                <table aria-label="Message, code edit, and frequency ablation on SWE-bench Verified">
                   <thead><tr><th>Condition</th><th>GPT 5.5</th><th>GLM 5.1</th><th>M2.7</th><th>Qwen 3.7</th></tr></thead>
                   <tbody>
                     <tr><td>Vanilla</td><td>81.5</td><td>70.5</td><td>76.5</td><td>74.0</td></tr>
@@ -280,13 +397,14 @@
                   </tbody>
                 </table>
               </div>
+              <p class="table-key">Exploratory resolve rates on SWE-bench Verified. K is the maximum number of interventions.</p>
+              <p class="takeaway"><strong>Finding.</strong> Messages alone do not reproduce the effect consistently. Direct changes to executable code are the stronger intervention in this comparison.</p>
             </div>
             <div>
-              <h3>Patch scale</h3>
-              <p>Counter-Edits remain local even when the underlying repair is much larger.</p>
+              <div class="block-head"><div><h3>Edits stay local</h3></div></div>
               <div class="table-scroll">
                 <table aria-label="Average reference repair and Counter-Edit size">
-                  <thead><tr><th>Dataset</th><th>Reference lines/files</th><th>Counter lines/files</th></tr></thead>
+                  <thead><tr><th>Benchmark</th><th>Reference lines / files</th><th>Counter lines / files</th></tr></thead>
                   <tbody>
                     <tr><td>Verified</td><td>13.3 / 1.20</td><td>7.0 / 1.04</td></tr>
                     <tr><td>Pro</td><td>361.0 / 5.44</td><td>13.0 / 1.40</td></tr>
@@ -294,32 +412,40 @@
                   </tbody>
                 </table>
               </div>
+              <p class="table-key">Mean changed lines and files per patch.</p>
+              <p class="takeaway"><strong>Finding.</strong> Counter-Edits remain small even when the underlying reference repair spans hundreds of lines and several files.</p>
             </div>
-          </div>
+          </article>
+        </div>
+      </section>
 
-          <div class="analysis-band">
-            <h3>How agents fail after the edit</h3>
-            <p>The analysis distinguishes retained conflicts from agents that replace the edit incorrectly, reconcile it only partially, or pursue an unrelated repair.</p>
-            <figure class="paper-figure">
-              <img src="assets/failure_mode_analysis.png" alt="Failure-mode distribution and user-edit revision rates by model">
-              <figcaption>Failure modes and edit-response behavior on SWE-bench Verified. Models that revise or remove the user edit more often tend to experience smaller resolve-rate drops.</figcaption>
-            </figure>
+      <section class="analysis" id="analysis">
+        <div class="shell analysis-grid">
+          <div class="analysis-copy">
+            <div class="eyebrow">Trajectory analysis</div>
+            <h2>Failure is not only passive acceptance</h2>
+            <p>Agents sometimes remove or replace the inserted edit and still fail. Recognizing a problematic contribution does not guarantee that the model can restore the repository to a correct state.</p>
+            <div class="analysis-stat"><b>63.3%</b><span>of Vanilla-solved / Counter-Edit-failed runs end with the conflicting behavior retained.</span></div>
           </div>
+          <figure class="paper-figure">
+            <a href="assets/failure_mode_analysis.png" title="Open the full-resolution analysis figure">
+              <img src="assets/failure_mode_analysis.png" alt="Failure-mode distribution and user-edit revision rates by model">
+            </a>
+            <figcaption>Failure modes and edit-response behavior on SWE-bench Verified.</figcaption>
+          </figure>
         </div>
       </section>
 
       <section class="resources" id="resources">
         <div class="shell">
           <div class="section-head">
-            <div>
-              <div class="eyebrow">Release</div>
-              <h2>Reproduce the protocol</h2>
-            </div>
+            <div><div class="eyebrow">Open release</div><h2>Reproduce and extend SWE-Touch</h2></div>
+            <p class="section-note">The release separates reusable benchmark records from the Harbor-based evaluation implementation.</p>
           </div>
           <div class="resource-grid">
-            <article class="resource"><h3>Code</h3><p>Harbor-based runner, data schemas, user simulator, patch validation, and reproducibility commands.</p><a class="text-link" href="https://github.com/Trae1ounG/SWE-Touch">Open repository</a></article>
-            <article class="resource"><h3>Dataset</h3><p>Released task records, task-critical regions, Counter-Edits, and validation evidence for supported benchmarks.</p><a class="text-link" href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch">Open dataset</a></article>
-            <article class="resource"><h3>Documentation</h3><p>Start with the release README for installation, data loading, validation, and the end-to-end evaluation workflow.</p><a class="text-link" href="https://github.com/Trae1ounG/SWE-Touch#readme">Read the guide</a></article>
+            <article class="resource"><h3>Code</h3><p>Runner, schemas, user simulator, validation gates, and reproducibility commands.</p><a class="text-link" href="https://github.com/Trae1ounG/SWE-Touch">Open repository</a></article>
+            <article class="resource"><h3>Dataset</h3><p>Task records, critical regions, Counter-Edits, and validation evidence.</p><a class="text-link" href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch">Browse on Hugging Face</a></article>
+            <article class="resource"><h3>Quick start</h3><p>Install the package, validate the release, and launch Vanilla or SWE-Touch evaluation.</p><a class="text-link" href="https://github.com/Trae1ounG/SWE-Touch#quick-start">Read the guide</a></article>
           </div>
         </div>
       </section>
