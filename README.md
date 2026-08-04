@@ -12,6 +12,7 @@
 
 <p align="center">
   <a href="https://trae1oung.github.io/SWE-Touch/"><img src="https://img.shields.io/badge/Project-Page-087D78" alt="SWE-Touch Project Page"></a>
+  <a href="https://arxiv.org/abs/2608.02499"><img src="https://img.shields.io/badge/arXiv-2608.02499-B31B1B?logo=arxiv&logoColor=white" alt="arXiv paper"></a>
   <a href="https://huggingface.co/datasets/Trae1ounG/SWE-Touch"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-blue" alt="Hugging Face Dataset"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB.svg" alt="Python 3.12+"></a>
@@ -231,6 +232,21 @@ retains its Apache-2.0 license in `harbor/LICENSE`.
 ## 📚 Documentation
 
 - [Project page](https://trae1oung.github.io/SWE-Touch/): visual overview of the benchmark, evaluation pipeline, and main findings.
+- [Paper](https://arxiv.org/abs/2608.02499): *SWE-Touch: Benchmarking Coding Agents When Users Touch the Code*.
 - [`docs/pipeline.md`](docs/pipeline.md): construction artifacts, validation gates, and recovery behavior.
 - [`docs/data_schema.md`](docs/data_schema.md): released-record fields and data contracts.
 - [`schema/`](schema/): machine-readable schemas for release artifacts.
+
+## 📖 Citation
+
+If you find SWE-Touch useful, please cite:
+
+```bibtex
+@article{tan2026swetouch,
+  title={SWE-Touch: Benchmarking Coding Agents When Users Touch the Code},
+  author={Tan, Yuqiao and Meng, Jinxiang and Lei, Fangyu and Wang, Minzheng and He, Shizhu and Zhao, Jun and Liu, Kang},
+  journal={arXiv preprint arXiv:2608.02499},
+  year={2026},
+  url={https://arxiv.org/abs/2608.02499}
+}
+```
